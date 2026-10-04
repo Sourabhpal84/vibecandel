@@ -327,6 +327,20 @@ input {
   margin: 12px 0 0;
   font-size: 12px;
 }
+.security-panel {
+  margin-top: 55px;
+  padding: 24px;
+  background: #ebeae6;
+}
+.security-panel h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+.security-current {
+  margin: 0 0 20px;
+  color: #666;
+  font-size: 13px;
+}
 .hero h1 {
   font-size: clamp(52px, 8vw, 110px);
   line-height: 0.95;
