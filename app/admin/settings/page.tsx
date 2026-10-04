@@ -4,11 +4,8 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import {
-  EmailAuthProvider,
-  reauthenticateWithCredential,
-  updatePassword,
   User,
-  verifyBeforeUpdateEmail,
+  signOut,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 
@@ -37,7 +34,7 @@ export default function SettingsPage() {
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [adminUser, setAdminUser] = useState<User | null>(null);
-  const [security, setSecurity] = useState({ currentPassword: "", newEmail: "", newPassword: "" });
+  const [security, setSecurity] = useState({ newEmail: "", newPassword: "" });
   const [securityMessage, setSecurityMessage] = useState("");
   const [securitySaving, setSecuritySaving] = useState(false);
 
@@ -87,38 +84,26 @@ export default function SettingsPage() {
 
   const updateCredentials = async (event: FormEvent) => {
     event.preventDefault();
-    if (!auth || !adminUser?.email) {
+    if (!auth || !adminUser) {
       setSecurityMessage("Could not identify the signed-in admin account.");
-      return;
-    }
-    const emailChanged = security.newEmail.trim() && security.newEmail.trim() !== adminUser.email;
-    const passwordChanged = Boolean(security.newPassword);
-    if (!emailChanged && !passwordChanged) {
-      setSecurityMessage("Enter a new email, a new password, or both.");
       return;
     }
     setSecuritySaving(true);
     setSecurityMessage("");
     try {
-      const credential = EmailAuthProvider.credential(adminUser.email, security.currentPassword);
-      await reauthenticateWithCredential(adminUser, credential);
-      if (emailChanged) {
-        await verifyBeforeUpdateEmail(adminUser, security.newEmail.trim());
-      }
-      if (passwordChanged) {
-        await updatePassword(adminUser, security.newPassword);
-      }
-      const results = [
-        emailChanged ? "Check the new email inbox and verify it to finish the email change." : "",
-        passwordChanged ? "Password updated." : "",
-      ].filter(Boolean);
-      setSecurityMessage(results.join(" "));
-      setSecurity({ currentPassword: "", newEmail: "", newPassword: "" });
+      const token = await adminUser.getIdToken();
+      const response = await fetch("/api/admin/update-credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email: security.newEmail.trim(), password: security.newPassword }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not update login details.");
+      window.alert("Admin email and password updated. Sign in again with the new credentials.");
+      await signOut(auth);
+      window.location.assign("/admin/login");
     } catch (error) {
-      const code = (error as { code?: string }).code;
-      setSecurityMessage(code === "auth/wrong-password" || code === "auth/invalid-credential"
-        ? "Current password is incorrect."
-        : `Could not update login details: ${String((error as Error).message || error)}`);
+      setSecurityMessage(`Could not update login details: ${String((error as Error).message || error)}`);
     } finally {
       setSecuritySaving(false);
     }
@@ -180,10 +165,9 @@ export default function SettingsPage() {
           <p className="security-current">Current email: {adminUser?.email || "Loading…"}</p>
           {securityMessage && <p className="admin-notice">{securityMessage}</p>}
           <form className="admin-form" onSubmit={updateCredentials}>
-            <label className="wide">Current password<input required type="password" autoComplete="current-password" value={security.currentPassword} onChange={(event) => setSecurity({ ...security, currentPassword: event.target.value })} /></label>
-            <label>New email<input type="email" autoComplete="email" placeholder="Leave blank to keep current email" value={security.newEmail} onChange={(event) => setSecurity({ ...security, newEmail: event.target.value })} /></label>
-            <label>New password<input type="password" minLength={6} autoComplete="new-password" placeholder="Leave blank to keep current password" value={security.newPassword} onChange={(event) => setSecurity({ ...security, newPassword: event.target.value })} /></label>
-            <button className="button button-dark wide" disabled={securitySaving}>{securitySaving ? "UPDATING…" : "UPDATE LOGIN DETAILS"}</button>
+            <label>New email<input required type="email" autoComplete="email" value={security.newEmail} onChange={(event) => setSecurity({ ...security, newEmail: event.target.value })} /></label>
+            <label>New password<input required type="password" minLength={6} autoComplete="new-password" value={security.newPassword} onChange={(event) => setSecurity({ ...security, newPassword: event.target.value })} /></label>
+            <button className="button button-dark wide" disabled={securitySaving}>{securitySaving ? "UPDATING…" : "SET CLIENT LOGIN DETAILS"}</button>
           </form>
         </section>
       </section>
