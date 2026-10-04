@@ -217,8 +217,8 @@ input {
   gap: 9px;
 }
 .brand-mark {
-  width: 30px;
-  height: 30px;
+  width: 54px;
+  height: 54px;
   object-fit: contain;
   border-radius: 50%;
   background: #fff;
@@ -678,8 +678,8 @@ footer {
   font-size: 17px;
 }
 .footer-brand .brand-mark {
-  width: 38px;
-  height: 38px;
+  width: 68px;
+  height: 68px;
 }
 .footer-brand p {
   color: #999;
@@ -904,6 +904,14 @@ footer {
   }
   .logo {
     font-size: 14px;
+  }
+  .brand-mark {
+    width: 46px;
+    height: 46px;
+  }
+  .footer-brand .brand-mark {
+    width: 60px;
+    height: 60px;
   }
   .actions {
     gap: 10px;
