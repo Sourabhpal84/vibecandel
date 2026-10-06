@@ -55,7 +55,7 @@ export default function OrderSuccessPage({
         </h1>
         <p className="success-copy">
           {confirmed
-            ? "Thank you for shopping with LATTEY WALA. We’ll keep you updated at every step."
+            ? "Thank you for shopping with SHAVIBE CANDLE. We’ll keep you updated at every step."
             : "Your payment is being securely confirmed. This page will update automatically."}
         </p>
         <p className="order-number">

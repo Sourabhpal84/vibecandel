@@ -1354,6 +1354,9 @@ details p {
   padding: 13px 0;
   border-bottom: 1px solid var(--line);
 }
+.admin-product-actions { display:flex; align-items:center; justify-content:flex-end; gap:12px; }
+.admin-product-actions button { color:#765548; font:9px "DM Mono"; letter-spacing:.06em; }
+.admin-product-actions button:first-child { text-decoration:underline; }
 .admin-product img {
   height: 70px;
   width: 60px;
@@ -3347,3 +3350,138 @@ details p {
     padding: 38px 5vw 80px;
   }
 }
+
+/* SHAVIBE CANDLE storefront */
+:root { --ink:#49362f; --paper:#fffaf4; --muted:#89756d; --line:#eaded3; --cocoa:#593d35; --rose:#f2d6cc; --lilac:#e6deef; --sage:#dce6d5; }
+body { background:var(--paper); color:var(--ink); }
+.candle-store { overflow:hidden; background:var(--paper); }
+.button-dark { background:#593d35; transition:background .2s,transform .2s; }
+.button-dark:hover { background:#754f41; transform:translateY(-1px); }
+.food-checkout .summary,.checkout-page .summary { background:#f3e7dc; border:1px solid #ead7c9; border-radius:14px; }
+.food-checkout h1,.checkout-empty h1 { color:#503a32; font-family:"Playfair Display",serif; font-weight:500; letter-spacing:-.045em; }
+.checkout-form input,.checkout-form textarea { border-radius:8px; border-color:#e5d6ca; color:#513c33; background:#fffdf9; }
+.checkout-form input:focus,.checkout-form textarea:focus { border-color:#bd8065; box-shadow:0 0 0 3px #bd80651c; }
+.food-checkout .summary-total { border-color:#b99482; }
+.food-checkout .summary-line img { filter:none; border-radius:6px; }
+.candle-store .announcement { background:#d9e3d2; color:#4d5d49; padding:10px 12px; display:flex; gap:10px; align-items:center; justify-content:center; font:9px "DM Mono",monospace; letter-spacing:.12em; }
+.candle-store .announcement span { color:#a77d67; }
+.candle-header { height:82px; padding-inline:5vw; border:0; background:#fffaf4; }
+.candle-header .nav a { font-size:10px; color:#6e5950; letter-spacing:.1em; transition:color .2s; }
+.candle-header .nav a:hover { color:#bb705c; }
+.candle-logo { gap:8px; font-family:Manrope,sans-serif; font-size:15px; letter-spacing:.16em; font-weight:800; color:#523b33; white-space:nowrap; }
+.candle-logo i { font-family:"Playfair Display",serif; font-weight:500; letter-spacing:.05em; }
+.logo-sun { font-size:24px; color:#c7795e; line-height:1; }
+.candle-header .icon,.candle-header .bag { color:#523b33; }
+.candle-header .bag b { background:#c7795e; }
+.candle-hero { min-height:min(740px,calc(100svh - 108px)); padding:clamp(65px,10vw,145px) 8vw 100px; display:flex; align-items:center; background-position:center; background-size:cover; position:relative; color:#fffaf3; animation:hero-in .9s ease both; }
+.candle-hero-copy { max-width:560px; position:relative; }
+.candle-hero .eyebrow { color:#f3d6c6; }
+.candle-hero h1 { font-size:clamp(66px,10vw,132px); font-weight:600; letter-spacing:-.075em; line-height:.85; margin:24px 0; }
+.candle-hero h1 i,.candle-store h2 i { font-family:"Playfair Display",serif; font-weight:500; letter-spacing:-.055em; }
+.candle-hero .hero-sub { max-width:410px; font-size:15px; line-height:1.8; color:#fff5ec; }
+.candle-cta { background:#f5d4c5; color:#513b33; border-radius:99px; padding:17px 23px; gap:24px; transition:transform .2s,background .2s; }
+.candle-cta:hover { background:#fff0df; transform:translateY(-2px); }
+.hero-stamp { position:absolute; right:-210px; bottom:5px; border:1px solid #f8e7d9a3; color:#fff5ec; width:122px; height:122px; border-radius:50%; display:grid; place-items:center; text-align:center; font:9px/1.6 "DM Mono"; letter-spacing:.1em; transform:rotate(9deg); }
+.hero-stamp svg { color:#f2c2a4; }
+.hero-caption { position:absolute; right:5vw; bottom:28px; font:9px "DM Mono"; letter-spacing:.17em; }
+.candle-intro { min-height:128px; display:flex; align-items:center; justify-content:center; gap:clamp(22px,5vw,65px); background:#f5e7dc; color:#62473c; }
+.candle-intro span { color:#c87d60; font-size:19px; }
+.candle-intro p { font-size:clamp(19px,3vw,29px); letter-spacing:-.04em; margin:0; }
+.candle-intro i { font-family:"Playfair Display",serif; }
+.candle-collections { padding:100px 7vw 115px; }
+.candle-store .section-head { margin-bottom:35px; }
+.candle-store .section-head h2,.candle-store .reasons h2 { font-size:clamp(37px,5vw,65px); line-height:1; letter-spacing:-.065em; color:#523b33; margin:10px 0 0; }
+.candle-store .eyebrow { color:#b27159; }
+.candle-store .text-link { border-color:#b3745c; color:#754c3e; font:10px "DM Mono"; letter-spacing:.1em; }
+.candle-category-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+.candle-category { border:0; padding:0; text-align:left; height:clamp(225px,28vw,355px); border-radius:160px 160px 14px 14px; background:#ecd8ca; cursor:pointer; }
+.candle-category-2 { border-radius:14px 14px 160px 160px; background:#e5e2ef; }
+.candle-category-3 { background:#e1e8dc; }
+.candle-category-4 { border-radius:14px; background:#f3e3b9; }
+.candle-category img { filter:none; opacity:.92; mix-blend-mode:multiply; transition:transform .55s cubic-bezier(.2,.7,.2,1); }
+.candle-category:hover img { filter:none; transform:scale(1.06); }
+.candle-category div { background:linear-gradient(transparent,rgba(52,36,30,.72)); padding:23px 18px; font:12px Manrope,sans-serif; letter-spacing:.04em; text-transform:none; }
+.mood-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.mood-grid a { min-height:210px; border-radius:14px; padding:25px; display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between; background:#f1ded1; color:#63483d; transition:transform .25s; }
+.mood-grid a:nth-child(2) { background:#e6e0ef; }.mood-grid a:nth-child(3) { background:#e2eadc; }.mood-grid a:hover { transform:translateY(-5px); }
+.mood-grid span { font:9px "DM Mono"; letter-spacing:.12em; }.mood-grid b { font:clamp(22px,3vw,32px) "Playfair Display",serif; }.mood-grid svg { align-self:flex-end; color:#b87359; }
+.candle-shop { background:#f7eee6; padding:95px 7vw 115px; }
+.candle-search { border-color:#c8ada0; border-radius:99px; padding:12px 16px; background:#fffaf5; }
+.candle-search input { width:190px; color:#513b33; }
+.candle-chips { overflow:auto; gap:24px; border-color:#e3d4c9; scrollbar-width:none; }
+.candle-chips button { white-space:nowrap; color:#977e72; transition:color .2s; }
+.candle-chips button.active { color:#583d33; border-color:#ba765c; }
+.candle-product-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:32px 18px; }
+.candle-product .product-image { height:clamp(240px,30vw,410px); border-radius:12px 12px 80px 12px; background:#ecd9cc; }
+.candle-product-1 .product-image { border-radius:80px 12px 12px; background:#e6e0ef; }
+.candle-product-2 .product-image { border-radius:12px 80px 12px; background:#dfe8da; }
+.candle-product-3 .product-image { border-radius:12px; background:#f0e3c8; }
+.candle-product .product-image img { filter:none; transition:transform .6s cubic-bezier(.2,.7,.2,1); }
+.candle-product:hover .product-image img { transform:scale(1.045); }
+.candle-product .product-tag { border-radius:99px; background:#f6e2d7; color:#704e40; font:8px "DM Mono"; }
+.candle-product .stock-pill { position:absolute; top:13px; left:13px; border-radius:99px; padding:7px 10px; background:#fff8f0e8; color:#765c4f; font:8px "DM Mono"; letter-spacing:.1em; }
+.candle-product .wish { top:13px; right:13px; color:#65483d; background:#fffaf0e8; width:37px; height:37px; }
+.candle-product .quick-add { transform:translateY(0); opacity:0; bottom:12px; left:12px; right:12px; border-radius:99px; background:#62463b; padding:14px; transition:opacity .2s,transform .2s,background .2s; }
+.candle-product:hover .quick-add,.candle-product .quick-add:focus-visible { opacity:1; transform:translateY(0); }
+.candle-product .quick-add:disabled { background:#89776e; opacity:.8; cursor:not-allowed; }
+.candle-product .quick-add:hover { background:#b87359; }
+.candle-product .product-meta { align-items:flex-start; gap:9px; padding:16px 2px; }
+.candle-product .product-meta h3 { font-size:14px; color:#4e3931; }
+.candle-product .product-meta h3 a:hover { color:#b87359; }
+.candle-product .product-meta p { color:#987f72; }
+.candle-product .price { color:#533b32; }
+.candle-product .price del { color:#a89489; }
+.empty-search { color:#593f35; }
+.brand-story { display:grid; grid-template-columns:1fr 1fr; min-height:560px; background:#e4e9dd; }
+.story-photo { min-height:500px; position:relative; overflow:hidden; }
+.story-photo img { width:100%; height:100%; position:absolute; inset:0; object-fit:cover; }
+.story-photo span { position:absolute; bottom:23px; left:28px; padding:11px 15px; border-radius:99px; background:#fffaf0e8; color:#61483d; font:9px "DM Mono"; letter-spacing:.1em; }
+.story-copy { position:relative; padding:clamp(55px,8vw,110px); display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
+.story-copy h2 { font-size:clamp(42px,5.3vw,72px); letter-spacing:-.07em; line-height:.98; margin:14px 0 24px; color:#4d423a; }
+.story-copy>p:not(.eyebrow) { font-size:14px; line-height:1.9; color:#736b60; max-width:440px; margin:0 0 30px; }
+.story-copy .text-link { align-self:flex-start; }
+.story-doodle { position:absolute; right:-32px; bottom:-100px; font-size:250px; color:#ced9c5; transform:rotate(-14deg); }
+.reasons { padding:105px 7vw 110px; text-align:center; background:#fff9f1; }
+.candle-store .reasons h2 { max-width:700px; margin:12px auto 55px; }
+.reason-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; text-align:left; }
+.reason-grid article { min-height:225px; padding:23px; background:#f7e9df; border-radius:12px; position:relative; }
+.reason-grid article:nth-child(2) { background:#eee8f3; }.reason-grid article:nth-child(3) { background:#e9eee3; }.reason-grid article:nth-child(4) { background:#f4edcf; }
+.reason-grid article>span { position:absolute; top:20px; right:20px; color:#9f7c6c; font:9px "DM Mono"; }
+.reason-grid svg { width:23px; height:23px; color:#b87359; margin-bottom:25px; }
+.reason-grid h3 { font:21px "Playfair Display",serif; margin:0 0 9px; color:#573f35; }
+.reason-grid p { color:#87746a; font-size:12px; line-height:1.7; max-width:240px; margin:0; }
+.candle-footer { padding:70px 7vw 25px; background:#523d36; color:#fff8ef; }
+.candle-footer .candle-logo { color:#fff3e5; }.candle-footer .logo-sun { color:#e7a286; }
+.candle-footer .footer-brand p { color:#e0cfc2; }.candle-footer .footer-brand .footer-company { color:#cdb9ab; }
+.candle-footer .footer-links .eyebrow { color:#d6aa92; }.candle-footer .footer-links a { color:#f4e7dd; }.candle-footer .footer-links a:hover { color:#efba9c; }
+.candle-footer .footer-bottom { border-color:#745c52; color:#d1bdb0; }
+.candle-overlay { background:rgba(67,47,39,.42); backdrop-filter:blur(3px); }.candle-cart { background:#fffaf3; color:#513c33; }.candle-cart .cart-head { border-color:#eaded3; }.candle-cart .cart-head h2 { font:29px "Playfair Display",serif; }.candle-cart .cart-item { border-color:#eaded3; }.candle-cart .cart-item img { border-radius:8px; filter:none; }.candle-cart .cart-item span { color:#907b70; }.candle-cart .cart-total { border-color:#b99482; }.candle-cart .button-dark { background:#5c4035; border-radius:99px; }.candle-cart .cart-quantity { width:max-content; display:flex; align-items:center; gap:14px; margin:10px 0; }.candle-cart .cart-quantity button { width:28px; height:28px; border:1px solid #eaded3; border-radius:50%; display:grid; place-items:center; }
+.candle-detail-page { min-height:100vh; background:#fffaf4; color:#513c33; }
+.candle-detail-header { min-height:82px; padding-inline:5vw; border-bottom:1px solid #efe3d9; }
+.candle-detail-header .candle-logo { font-size:14px; }
+.candle-detail-header .back-link { color:#7b665a; font:10px "DM Mono"; letter-spacing:.1em; }
+.candle-pincode { margin:22px 0 26px; padding:17px; border-radius:10px; background:#f6eee6; }
+.candle-pincode label { display:flex; align-items:center; gap:8px; color:#72594c; font:9px "DM Mono"; letter-spacing:.08em; }
+.candle-pincode label svg { color:#b87359; }
+.candle-pincode input { width:100%; margin-top:12px; border:1px solid #e4d4c7; border-radius:6px; background:#fffdf9; padding:12px; outline:0; font-size:13px; }
+.candle-pincode input:focus { border-color:#ba8067; box-shadow:0 0 0 3px #ba80671c; }
+.candle-pincode small { display:block; margin-top:10px; font-size:11px; }
+.candle-detail-grid { max-width:1300px; margin:auto; padding:55px 5vw 100px; display:grid; grid-template-columns:minmax(0,1.1fr) minmax(350px,.9fr); gap:clamp(35px,7vw,100px); align-items:start; }
+.candle-main-image { aspect-ratio:1/1.12; height:auto; border-radius:14px 14px 120px 14px; background:#f1e1d5; }.candle-main-image img { filter:none; }
+.candle-main-image .gallery-arrow { border-radius:50%; background:#fff9f0e8; color:#593f34; }
+.candle-detail-page .thumbs button { border-color:transparent; border-radius:8px; overflow:hidden; }.candle-detail-page .thumbs button.selected { border-color:#bb8067; }.candle-detail-page .thumbs img { filter:none; }
+.candle-product-info { padding:clamp(8px,3vw,36px) 0; }.candle-product-info .eyebrow { color:#b1745e; }.candle-product-info>h1 { color:#503a32; font:clamp(40px,5vw,67px)/.98 "Playfair Display",serif; letter-spacing:-.055em; margin:18px 0 20px; }
+.candle-product-info .detail-price { color:#543b31; align-items:center; gap:12px; }.candle-save { color:#ad6e56; font:10px "DM Mono"; }.candle-product-info .detail-description { color:#78675e; font-size:14px; line-height:1.85; margin:24px 0; }
+.candle-note { display:grid; gap:12px; padding:17px 0; margin:15px 0 28px; border-block:1px solid #eddfd4; }.candle-note span,.candle-detail-footnote span { display:flex; gap:10px; align-items:center; color:#79655a; font:9px "DM Mono"; letter-spacing:.08em; }.candle-note svg { color:#ba7b5f; }
+.candle-quantity { border:0; padding:0; margin-bottom:24px; }.candle-quantity>span { font:9px "DM Mono"; color:#876f62; letter-spacing:.1em; }.candle-quantity>div { border:1px solid #e5d6ca; border-radius:99px; padding:4px; }.candle-quantity button { border-radius:50%; width:34px; height:34px; }.candle-detail-actions { display:grid; }.candle-detail-actions .button { border-radius:99px; justify-content:space-between; padding:17px 21px; }.candle-detail-actions .button-dark { background:#5b4035; }.candle-back-shop { border:1px solid #e4d2c5; justify-content:center!important; color:#61473b; }.candle-detail-footnote { display:flex; flex-wrap:wrap; gap:18px; margin-top:25px; }
+@keyframes hero-in { from { opacity:.55; transform:scale(1.015); } to { opacity:1; transform:scale(1); } }
+@media (prefers-reduced-motion:reduce) { .candle-store *, .candle-detail-page * { scroll-behavior:auto!important; animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; } }
+@media (max-width:800px) {
+  .candle-header { height:72px; padding-inline:5vw; }.candle-header .nav.nav-open { top:72px; background:#fffaf4; box-shadow:0 12px 20px #513c3312; z-index:5; }.candle-header .candle-logo { font-size:12px; gap:5px; }.candle-logo .logo-sun { font-size:19px; }.candle-header .actions { gap:12px; }
+  .candle-hero { min-height:650px; min-height:calc(88svh - 72px); padding:65px 7vw 90px; background-position:58% center; }.candle-hero h1 { font-size:clamp(66px,14vw,100px); }.candle-hero .hero-sub { max-width:330px; font-size:14px; }.hero-stamp { right:0; bottom:-125px; width:95px; height:95px; font-size:7px; }.hero-caption { left:7vw; right:auto; bottom:22px; font-size:8px; }
+  .candle-intro { min-height:100px; gap:16px; }.candle-collections,.candle-shop { padding:70px 5vw 80px; }.candle-store .section-head { align-items:flex-start; gap:20px; flex-direction:column; }.candle-store .section-head h2 { font-size:clamp(36px,9vw,52px); }.candle-category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }.candle-category { height:clamp(210px,58vw,330px); }.candle-category-3 { border-radius:14px 14px 130px 130px; }.candle-category-4 { border-radius:130px 130px 14px 14px; }.mood-grid { grid-template-columns:1fr; }.mood-grid a { min-height:150px; }
+  .candle-shop .section-head { flex-direction:column; }.candle-search { width:100%; }.candle-search input { width:100%; }.candle-chips { flex-direction:row; align-items:center; gap:20px; }.candle-product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px 12px; }.candle-product .product-image { height:auto; aspect-ratio:.77; border-radius:10px 10px 58px 10px; }.candle-product-1 .product-image { border-radius:58px 10px 10px; }.candle-product-2 .product-image { border-radius:10px 58px 10px; }.candle-product-3 .product-image { border-radius:10px; }.candle-product .quick-add { opacity:1; padding:11px 8px; font-size:9px; bottom:8px; left:8px; right:8px; }.candle-product .wish { width:32px; height:32px; }.candle-product .wish svg { width:17px; }.candle-product .product-meta { flex-direction:column; padding:11px 2px; }.candle-product .product-meta h3 { font-size:12px; }.candle-product .price { align-items:flex-start; flex-direction:row; gap:8px; font-size:12px; }
+  .brand-story { grid-template-columns:1fr; }.story-photo { min-height:380px; }.story-copy { padding:65px 7vw 80px; }.story-copy h2 { font-size:clamp(44px,11vw,62px); }.reasons { padding:75px 5vw 80px; }.candle-store .reasons h2 { margin-bottom:32px; }.reason-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }.reason-grid article { min-height:195px; padding:17px; }.reason-grid h3 { font-size:19px; }.reason-grid p { font-size:11px; }.candle-footer .footer-links { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .candle-detail-header { padding:18px 5vw; }.candle-detail-header .back-link { font-size:0; gap:0; }.candle-detail-header .back-link svg { width:19px; height:19px; }.candle-detail-header .candle-logo { font-size:11px; }.candle-detail-grid { grid-template-columns:1fr; gap:20px; padding:20px 5vw 70px; }.candle-main-image { aspect-ratio:.95; border-radius:10px 10px 75px 10px; }.candle-product-info { padding:15px 0; }.candle-product-info>h1 { font-size:46px; }.candle-detail-footnote { display:grid; }
+}
+@media (max-width:380px) { .candle-header .actions { gap:7px; }.candle-header .actions>.icon:first-child { display:none; }.candle-header .candle-logo { font-size:10px; letter-spacing:.1em; }.candle-product .quick-add { font-size:8px; gap:8px; } }

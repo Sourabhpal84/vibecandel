@@ -76,7 +76,7 @@ export default function AccountPage() {
       <main className="order-page">
         <section className="order-card">
           <p className="eyebrow">YOUR ACCOUNT</p>
-          <h1>Welcome to LATTEY WALA.</h1>
+          <h1>Welcome to SHAVIBE CANDLE.</h1>
           <p>Sign in to manage your profile, saved addresses and orders.</p>
           <Link className="button button-dark" href="/account/login">
             SIGN IN <ArrowRight size={15} />

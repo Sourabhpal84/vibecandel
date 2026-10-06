@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ImagePlus, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ImagePlus, Plus, Trash2, Pencil } from "lucide-react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { CategoryNode, slugify } from "@/lib/category-tree";
@@ -74,6 +74,18 @@ export default function AdminCategoriesPage() {
       setNotice(catalogError(error));
     }
   };
+  const rename = async (node: CategoryNode) => {
+    const name = prompt("Candle category name", node.name);
+    if (!name?.trim() || name.trim() === node.name) return;
+    try {
+      const nextName = name.trim();
+      await updateCategory(node.id, { name: nextName, slug: slugify(nextName) });
+      setNodes((current) => current.map((item) => item.id === node.id ? { ...item, name: nextName, slug: slugify(nextName) } : item));
+      setNotice(`${nextName} updated.`);
+    } catch (error) {
+      setNotice(catalogError(error));
+    }
+  };
   const remove = async (node: CategoryNode) => {
     if (nodes.some((item) => item.parentId === node.id)) {
       alert("Delete child categories first.");
@@ -104,6 +116,9 @@ export default function AdminCategoriesPage() {
             {nodes.filter((child) => child.parentId === node.id).length}{" "}
             subcategories
           </span>
+          <button className="tree-add" onClick={() => rename(node)}>
+            <Pencil size={14} /> RENAME
+          </button>
           <button className="tree-add" onClick={() => editImage(node)}>
             <ImagePlus size={14} /> {node.image ? "EDIT IMAGE" : "ADD IMAGE"}
           </button>
@@ -124,7 +139,7 @@ export default function AdminCategoriesPage() {
           <ArrowLeft size={16} /> ADMIN
         </Link>
         <div className="logo">
-          LATTEY <span>WALA</span>
+          SHAVIBE <span>CANDLE</span>
         </div>
         <span className="admin-badge">CATEGORY MANAGER</span>
       </header>

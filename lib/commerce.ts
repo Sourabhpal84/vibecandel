@@ -21,6 +21,6 @@ export function getBulkOrderUrl(
     requirement: string;
   },
 ) {
-  const message = `Hello LATTEY WALA,\n\nI want to enquire about delivery.\n\nName: ${details.name}\nPhone: ${details.phone}\nPincode: ${details.location}\nRequirement: ${details.requirement}\n\nPlease contact me regarding availability and delivery.`;
+  const message = `Hello SHAVIBE CANDLE,\n\nI want to enquire about delivery.\n\nName: ${details.name}\nPhone: ${details.phone}\nPincode: ${details.location}\nRequirement: ${details.requirement}\n\nPlease contact me regarding availability and delivery.`;
   return `https://wa.me/${number.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
 }

@@ -20,7 +20,7 @@ type StoreSettings = {
 };
 
 const defaults: StoreSettings = {
-  storeName: "LATTEY WALA",
+  storeName: "SHAVIBE CANDLE",
   supportPhone: "",
   deliveryCharge: "99",
   freeDeliveryThreshold: "1999",

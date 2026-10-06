@@ -14,6 +14,7 @@ import {
   deleteProduct,
   getCategories,
   getProducts,
+  updateProduct,
 } from "@/lib/firestore-catalog";
 
 const blank = {
@@ -21,10 +22,9 @@ const blank = {
   description: "",
   mrp: "999",
   price: "699",
-  colors: "Black",
-  sizes: "S:699, M:699, L:699, XL:699",
+  stock: "10",
+  scent: "",
   images: ["", "", "", ""],
-  material: "Cotton",
   categoryId: "",
 };
 const catalogError = (error: unknown) =>
@@ -40,6 +40,7 @@ export default function AdminPage() {
   const [items, setItems] = useState<Product[]>([]);
   const [categories, setCategories] = useState<CategoryNode[]>([]);
   const [form, setForm] = useState(blank);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
@@ -133,27 +134,30 @@ export default function AdminPage() {
       setNotice(catalogError(error));
     }
   };
+  const editProduct = (product: Product) => {
+    setEditingProductId(product.id);
+    setForm({
+      name: product.name,
+      description: product.description || "",
+      mrp: String(product.mrp ?? product.price),
+      price: String(product.price),
+      stock: String(product.stock ?? 0),
+      scent: product.scent || "",
+      images: [...(product.images?.length ? product.images : [product.image]), "", "", ""].slice(0, 4),
+      categoryId: product.categoryId || "",
+    });
+    document.getElementById("product-form")?.scrollIntoView({ behavior: "smooth" });
+  };
   const addProduct = async (event: FormEvent) => {
     event.preventDefault();
     const images = form.images.filter(Boolean);
-    if (!form.name || images.length < 4 || !form.categoryId) {
-      setNotice("Product name, category and 4 images are required.");
+    if (!form.name || images.length < 1 || !form.categoryId) {
+      setNotice("Product name, category and at least one image are required.");
       return;
     }
     const category = categoryOptions.find(
       (item) => item.id === form.categoryId,
     )!;
-    const colors = form.colors
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-    const sizeEntries = form.sizes
-      .split(",")
-      .map((item) => {
-        const [size, amount] = item.trim().split(":");
-        return { size: size.trim(), price: Number(amount) };
-      })
-      .filter((item) => item.size);
     const price = Number(form.price);
     const mrp = Number(form.mrp);
     const product = {
@@ -165,29 +169,26 @@ export default function AdminPage() {
       mrp,
       image: images[0],
       images,
-      sizes: sizeEntries.map((item) => item.size),
-      colors,
-      color: colors[0],
-      material: form.material,
+      sizes: [],
+      colors: [],
+      color: "",
+      scent: form.scent,
+      stock: Math.max(0, Number(form.stock) || 0),
       active: true,
       published: true,
-      variants: colors.flatMap((color) =>
-        sizeEntries.map(({ size, price: sizePrice }) => ({
-          id: `${Date.now()}-${color}-${size}`,
-          color,
-          size,
-          price:
-            Number.isFinite(sizePrice) && sizePrice >= 0 ? sizePrice : price,
-          stock: 10,
-          sku: `${slugify(form.name).slice(0, 8)}-${color.slice(0, 2)}-${size}`,
-        })),
-      ),
+      variants: [],
     };
     try {
-      const saved = await createProduct(product);
-      setItems((current) => [saved, ...current]);
+      if (editingProductId) {
+        await updateProduct(editingProductId, product);
+        setItems((current) => current.map((item) => item.id === editingProductId ? { ...item, ...product } : item));
+      } else {
+        const saved = await createProduct(product);
+        setItems((current) => [saved, ...current]);
+      }
       setForm(blank);
-      setNotice("Product saved to Firestore.");
+      setEditingProductId(null);
+      setNotice(editingProductId ? "Product updated in Firestore." : "Product saved to Firestore.");
     } catch (error) {
       setNotice(catalogError(error));
     }
@@ -228,7 +229,7 @@ export default function AdminPage() {
           <ArrowLeft size={16} /> VIEW STORE
         </Link>
         <div className="logo">
-          LATTEY <span>WALA</span>
+          SHAVIBE <span>CANDLE</span>
         </div>
         <div className="admin-header-actions">
           <span className="admin-badge">{user.email}</span>
@@ -286,25 +287,20 @@ export default function AdminPage() {
                   <div>
                     <b>{product.name}</b>
                     <span>
-                      {product.category} · {product.color}
+                      {product.category}{product.scent ? ` · ${product.scent}` : ""} · Stock {product.stock ?? "—"}
                     </span>
                   </div>
                   <strong>₹{product.price.toLocaleString("en-IN")}</strong>
-                  <button
-                    onClick={() => removeProduct(product)}
-                    aria-label={`Delete ${product.name}`}
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="admin-product-actions"><button onClick={() => editProduct(product)} aria-label={`Edit ${product.name}`}>EDIT</button><button onClick={() => removeProduct(product)} aria-label={`Delete ${product.name}`}><Trash2 size={16} /></button></div>
                 </div>
               ))}
             </div>
           </section>
-          <section className="admin-section">
+          <section className="admin-section" id="product-form">
             <div className="admin-section-head">
               <div>
-                <p className="eyebrow">ADD PRODUCT</p>
-                <h2>New product</h2>
+                <p className="eyebrow">{editingProductId ? "EDIT PRODUCT" : "ADD PRODUCT"}</p>
+                <h2>{editingProductId ? "Update candle details" : "New product"}</h2>
               </div>
             </div>
             <form className="admin-form" onSubmit={addProduct}>
@@ -367,41 +363,30 @@ export default function AdminPage() {
                 />
               </label>
               <label>
-                Colours
+                Stock available
                 <input
-                  value={form.colors}
-                  onChange={(event) =>
-                    setForm({ ...form, colors: event.target.value })
-                  }
-                  placeholder="Black, White, Beige"
+                  required
+                  min="0"
+                  type="number"
+                  value={form.stock}
+                  onChange={(event) => setForm({ ...form, stock: event.target.value })}
                 />
               </label>
               <label>
-                Sizes & prices
+                Fragrance / scent notes
                 <input
-                  value={form.sizes}
+                  value={form.scent}
                   onChange={(event) =>
-                    setForm({ ...form, sizes: event.target.value })
+                    setForm({ ...form, scent: event.target.value })
                   }
-                  placeholder="S:499, M:549, L:599, XL:649, XXL:699"
+                  placeholder="e.g. vanilla, sandalwood, bergamot"
                 />
-                <small className="field-help">
-                  Use Size:Price. Remove a size to disable it.
-                </small>
-              </label>
-              <label>
-                Material
-                <input
-                  value={form.material}
-                  onChange={(event) =>
-                    setForm({ ...form, material: event.target.value })
-                  }
-                />
+                <small className="field-help">Optional scent details shown on the product page.</small>
               </label>
               <div className="image-upload wide">
                 <div className="upload-title">
                   <span>Product images</span>
-                  <small>Minimum 4 image URLs</small>
+                  <small>Add up to 4 product image URLs</small>
                 </div>
                 <div className="image-inputs">
                   {form.images.map((image, index) => (
@@ -427,7 +412,7 @@ export default function AdminPage() {
                         <>
                           <ImagePlus size={19} />
                           <input
-                            required
+                            required={index === 0}
                             type="url"
                             placeholder={`Image ${index + 1}`}
                             value={image}
@@ -450,8 +435,9 @@ export default function AdminPage() {
                 className="button button-dark submit-product"
                 type="submit"
               >
-                <Plus size={16} /> ADD PRODUCT
+                <Plus size={16} /> {editingProductId ? "SAVE CHANGES" : "ADD PRODUCT"}
               </button>
+              {editingProductId && <button className="button button-outline" type="button" onClick={() => { setEditingProductId(null); setForm(blank); }}>CANCEL EDIT</button>}
             </form>
           </section>
         </div>

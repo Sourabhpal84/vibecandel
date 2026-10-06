@@ -171,7 +171,7 @@ export default function DeliveryAreasPage() {
           <ArrowLeft size={16} /> ADMIN
         </Link>
         <div className="logo">
-          LATTEY <span>WALA</span>
+          SHAVIBE <span>CANDLE</span>
         </div>
         <Link className="button button-outline" href="/admin/orders">
           ORDERS

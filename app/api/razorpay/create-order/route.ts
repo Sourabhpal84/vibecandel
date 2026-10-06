@@ -110,6 +110,7 @@ export async function POST(request: Request) {
           sku?: string;
         }>;
         price?: number;
+        stock?: number;
         active?: boolean;
       };
       if (product.active === false)
@@ -123,11 +124,17 @@ export async function POST(request: Request) {
           value.color === item.color &&
           value.size === item.size,
       );
+      if (product.variants?.length && !variant)
+        return NextResponse.json(
+          { error: `${product.name || "Item"} is no longer available in your selected option` },
+          { status: 400 },
+        );
       const unitPrice = Number(variant?.price ?? product.price);
       if (
         !Number.isFinite(unitPrice) ||
         unitPrice < 0 ||
-        (variant && Number(variant.stock) < quantity)
+        (variant && Number(variant.stock) < quantity) ||
+        (!variant && Number.isFinite(Number(product.stock)) && Number(product.stock) < quantity)
       )
         return NextResponse.json(
           { error: `${product.name || "Item"} is out of stock` },

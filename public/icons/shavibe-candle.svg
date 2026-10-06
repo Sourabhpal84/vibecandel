@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="120" fill="#f5e4d7"/>
+  <circle cx="256" cy="256" r="188" fill="#e4eadc"/>
+  <path d="M256 116c31 42 39 67 16 100-18 26-43 29-48 59-4 23 10 42 32 43 30 2 49-26 41-54 43 29 58 72 45 113-14 45-53 72-99 68-54-4-91-48-87-99 4-49 34-74 58-110 21-31 24-72 42-120Z" fill="#c77759"/>
+  <path d="M177 332h158l-18 85H195l-18-85Z" fill="#fffaf3" stroke="#775047" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M224 300h64" stroke="#775047" stroke-width="9" stroke-linecap="round"/>
+  <path d="M256 276v26" stroke="#775047" stroke-width="8" stroke-linecap="round"/>
+  <text x="256" y="462" text-anchor="middle" fill="#65463c" font-family="Georgia,serif" font-size="30" letter-spacing="7">SHAVIBE</text>
+</svg>

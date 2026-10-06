@@ -179,7 +179,7 @@ export default function OrderPage({ params }: { params: { orderId: string } }) {
                 <div>
                   <b>{item.name}</b>
                   <small>
-                    {item.color} · {item.size} · Qty {item.quantity}
+                    {item.color && `${item.color} · `}{item.size && `${item.size} · `}Qty {item.quantity}
                   </small>
                 </div>
                 <strong>

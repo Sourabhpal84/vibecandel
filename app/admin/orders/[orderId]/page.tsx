@@ -147,7 +147,7 @@ export default function AdminOrderDetail({
           <ArrowLeft size={16} /> ORDERS
         </Link>
         <div className="logo">
-          LATTEY <span>WALA</span>
+          SHAVIBE <span>CANDLE</span>
         </div>
         <StatusBadge status={current} />
       </header>
@@ -212,7 +212,7 @@ export default function AdminOrderDetail({
                 <div>
                   <b>{item.name}</b>
                   <small>
-                    {item.color} · {item.size} · Qty {item.quantity}
+                    {item.color && `${item.color} · `}{item.size && `${item.size} · `}Qty {item.quantity}
                   </small>
                   <small>₹{item.price} each</small>
                 </div>

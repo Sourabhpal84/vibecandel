@@ -240,8 +240,8 @@ export default function CheckoutPage() {
         key: created.keyId,
         amount: created.amount,
         currency: created.currency,
-        name: "LATTEY WALA",
-        description: "LATTEY WALA order",
+        name: "SHAVIBE CANDLE",
+        description: "SHAVIBE CANDLE order",
         order_id: created.orderId,
         prefill: {
           name: form.name,
@@ -321,19 +321,19 @@ export default function CheckoutPage() {
       <main className="checkout-page">
         <header className="detail-header">
           <Link href="/#shop" className="back-link">
-            <ArrowLeft size={16} /> BROWSE MENU
+            <ArrowLeft size={16} /> BROWSE CANDLES
           </Link>
           <Link href="/" className="logo">
-            LATTEY <span>WALA</span>
+            SHAVIBE <span>CANDLE</span>
           </Link>
           <span className="eyebrow">CHECKOUT</span>
         </header>
         <section className="checkout-empty">
           <p className="eyebrow">YOUR CART</p>
           <h1>Your cart is empty</h1>
-          <p>Add something delicious before continuing.</p>
+          <p>Add a little glow before continuing.</p>
           <Link className="button button-dark" href="/#shop">
-            BROWSE MENU <ArrowRight size={16} />
+            BROWSE CANDLES <ArrowRight size={16} />
           </Link>
         </section>
       </main>
@@ -342,10 +342,10 @@ export default function CheckoutPage() {
     <main className="checkout-page">
       <header className="detail-header">
         <Link href="/#shop" className="back-link">
-          <ArrowLeft size={16} /> BROWSE MENU
+          <ArrowLeft size={16} /> BROWSE CANDLES
         </Link>
         <Link href="/" className="logo">
-          LATTEY <span>WALA</span>
+          SHAVIBE <span>CANDLE</span>
         </Link>
         <span className="eyebrow">CART → DELIVERY → PAYMENT</span>
       </header>
@@ -456,7 +456,7 @@ export default function CheckoutPage() {
               <div>
                 <b>{line.name}</b>
                 <span>
-                  {line.color} · {line.size || "One size"}
+                  {line.color && `${line.color} · `}{line.size && `${line.size} · `}Qty {line.quantity}
                 </span>
                 <div className="summary-quantity">
                   <button
