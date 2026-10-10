@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     const payment = await getRazorpayPayment(razorpay_payment_id);
     if (
       payment.order_id !== razorpay_order_id ||
-      !["authorized", "captured"].includes(payment.status || "") ||
+      payment.status !== "captured" ||
       payment.amount !== checkout.amountPaise
     )
       return NextResponse.json(
@@ -66,6 +66,7 @@ export async function POST(request: Request) {
     const order = await confirmRazorpayPayment(
       razorpay_order_id,
       razorpay_payment_id,
+      payment,
     );
     return NextResponse.json({
       verified: true,

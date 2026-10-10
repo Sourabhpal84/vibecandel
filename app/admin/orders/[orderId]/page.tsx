@@ -106,6 +106,7 @@ export default function AdminOrderDetail({
       const timestamp = new Date().toISOString();
       await updateDoc(doc(db, "orders", params.orderId), {
         orderStatus: next,
+        ...(next === "DELIVERED" ? { deliveredAt: timestamp } : {}),
         updatedAt: serverTimestamp(),
         updatedBy: auth?.currentUser?.uid || "",
         statusHistory: arrayUnion({ status: next, timestamp }),

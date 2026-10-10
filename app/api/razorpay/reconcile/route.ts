@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     if (!payment?.id)
       return NextResponse.json({ resolved: false, status: "PENDING" });
 
-    const order = await confirmRazorpayPayment(String(razorpay_order_id), payment.id);
+    const order = await confirmRazorpayPayment(String(razorpay_order_id), payment.id, payment);
     return NextResponse.json({ resolved: true, orderId: order.id });
   } catch (error) {
     return NextResponse.json(
