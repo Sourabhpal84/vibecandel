@@ -24,6 +24,16 @@ export default function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [welcomeVisible, setWelcomeVisible] = useState(false);
+  const [catalogReady, setCatalogReady] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("shavibe-welcome-seen")) return;
+      sessionStorage.setItem("shavibe-welcome-seen", "1");
+    } catch { /* Keep the intro usable when browser storage is unavailable. */ }
+    setWelcomeVisible(true);
+  }, []);
 
   useEffect(() => {
     setCart(readCart());
@@ -33,7 +43,34 @@ export default function Home() {
     return () => { window.removeEventListener(CART_UPDATED_EVENT, sync); window.removeEventListener("storage", sync); };
   }, []);
   useEffect(() => auth ? onAuthStateChanged(auth, setUser) : undefined, []);
-  useEffect(() => watchCatalog(setCatalog, setCategoryNodes, (error) => console.warn("Live catalog update failed:", error)), []);
+  useEffect(() => watchCatalog((products) => { setCatalog(products); setCatalogReady(true); }, setCategoryNodes, (error) => { console.warn("Live catalog update failed:", error); setCatalogReady(true); }), []);
+
+  useEffect(() => {
+    if (!welcomeVisible || !catalogReady) return;
+    let cancelled = false;
+    const preload = (src: string) => new Promise<void>((resolve) => {
+      const image = new Image();
+      image.onload = () => resolve();
+      image.onerror = () => resolve();
+      image.src = src;
+      if (image.complete) resolve();
+    });
+    const candleImages = catalog.filter((item) => item.active !== false && item.published !== false && !isApparelProduct(item)).slice(0, 4).map((item) => item.image).filter(Boolean);
+    const imagesReady = Promise.race([
+      Promise.all([heroImage, "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1200&q=85", ...candleImages].map(preload)),
+      new Promise<void>((resolve) => window.setTimeout(resolve, 4500)),
+    ]);
+    Promise.all([imagesReady, new Promise<void>((resolve) => window.setTimeout(resolve, 1700))]).then(() => {
+      if (!cancelled) setWelcomeVisible(false);
+    });
+    return () => { cancelled = true; };
+  }, [welcomeVisible, catalogReady, catalog]);
+
+  useEffect(() => {
+    if (!welcomeVisible) return;
+    const timeout = window.setTimeout(() => setWelcomeVisible(false), 8000);
+    return () => window.clearTimeout(timeout);
+  }, [welcomeVisible]);
 
   const selected = categoryNodes.find((item) => item.id === activeCategory);
   const visibleIds = selected ? descendantsOf(categoryNodes, selected.id) : null;
@@ -62,6 +99,7 @@ export default function Home() {
   const roots = categoryNodes.filter((item) => !item.parentId && catalog.some((product) => product.active !== false && product.published !== false && !isApparelProduct(product) && descendantsOf(categoryNodes, item.id).has(product.categoryId || product.category.toLowerCase().replace(/[^a-z0-9]+/g, "-"))));
 
   return <main className="candle-store">
+    {welcomeVisible && <div className="welcome-splash" role="status" aria-label="Welcome to Shavibe Candle"><div className="welcome-splash-content"><div className="welcome-candle-art" aria-hidden="true"><span className="welcome-orbit welcome-orbit-one"/><span className="welcome-orbit welcome-orbit-two"/><span className="welcome-flame"><i/></span><span className="welcome-wick"/><span className="welcome-candle"><i>✳</i></span><span className="welcome-spark welcome-spark-one">✦</span><span className="welcome-spark welcome-spark-two">✧</span><span className="welcome-spark welcome-spark-three">✳</span></div><p className="welcome-kicker">A LITTLE GLOW IS ON ITS WAY</p><h2>WELCOME TO<br/><i>SHAVIBE</i></h2><span className="welcome-brand-note">C A N D L E</span><div className="welcome-progress"><span/></div><p className="welcome-signoff">Find your feel-good glow</p></div></div>}
     <div className="announcement"><Sparkles size={14} /> A LITTLE GLOW, A LOT OF FEEL GOOD <span>✦</span> FIND YOUR FAVOURITE SCENT</div>
     <header className="header candle-header">
       <button className="icon mobile-only" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">{menuOpen ? <X/> : <Menu/>}</button>
