@@ -1,4 +1,5 @@
 import { getAdminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 type Checkout = {
   orderId?: string;
@@ -6,6 +7,7 @@ type Checkout = {
   status?: string;
   customerId?: string;
   displayOrderId?: string;
+  couponCode?: string;
 };
 
 export async function getRazorpayPayment(paymentId: string) {
@@ -92,6 +94,10 @@ export async function confirmRazorpayPayment(
     };
     if (checkout.status === "PAID" && order.paymentStatus === "PAID")
       return { id: orderRef.id, displayOrderId: order.displayOrderId };
+    const couponRef = checkout.couponCode
+      ? adminDb.collection("coupons").doc(checkout.couponCode)
+      : undefined;
+    const couponSnapshot = couponRef ? await transaction.get(couponRef) : undefined;
     if (
       order.razorpayPaymentId &&
       order.razorpayPaymentId !== razorpayPaymentId
@@ -127,6 +133,8 @@ export async function confirmRazorpayPayment(
       paymentVerifiedAt: now,
       updatedAt: now,
     });
+    if (couponRef && couponSnapshot?.exists)
+      transaction.update(couponRef, { usageCount: FieldValue.increment(1), updatedAt: now });
     return { id: orderRef.id, displayOrderId: order.displayOrderId };
   });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb, requireUser } from "@/lib/firebase-admin";
 import { isValidPincode, normalizePincode } from "@/lib/commerce";
+import { calculateCouponDiscount, Coupon } from "@/lib/coupons";
 
 export const runtime = "nodejs";
 type ClientItem = {
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
       items?: ClientItem[];
       address?: Address;
       checkoutKey?: string;
+      couponCode?: string;
     };
     const address = body.address || {};
     const items = body.items || [];
@@ -174,6 +176,18 @@ export async function POST(request: Request) {
       (total, item) => total + item.total,
       0,
     );
+    const couponCode = String(body.couponCode || "").trim().toUpperCase().replace(/\s+/g, "");
+    let discount = 0;
+    if (couponCode) {
+      const couponSnapshot = await adminDb.collection("coupons").doc(couponCode).get();
+      if (!couponSnapshot.exists)
+        return NextResponse.json({ error: "This coupon code is not valid." }, { status: 400 });
+      try {
+        discount = calculateCouponDiscount({ ...couponSnapshot.data(), code: couponCode } as Coupon, subtotal);
+      } catch (error) {
+        return NextResponse.json({ error: error instanceof Error ? error.message : "This coupon cannot be used." }, { status: 400 });
+      }
+    }
     const deliveryCharge =
       Number.isFinite(freeDeliveryAbove) &&
       freeDeliveryAbove > 0 &&
@@ -189,8 +203,9 @@ export async function POST(request: Request) {
       configuredTaxRate <= 100
         ? configuredTaxRate
         : 0;
-    const taxAmount = Math.round(subtotal * taxRate) / 100;
-    const totalAmount = subtotal + deliveryCharge + taxAmount;
+    const taxableSubtotal = subtotal - discount;
+    const taxAmount = Math.round(taxableSubtotal * taxRate) / 100;
+    const totalAmount = taxableSubtotal + deliveryCharge + taxAmount;
     const attemptRef = adminDb
       .collection("checkoutAttempts")
       .doc(`${user.uid}_${checkoutKey}`);
@@ -208,6 +223,8 @@ export async function POST(request: Request) {
             deliveryCharge?: number;
             taxRate?: number;
             taxAmount?: number;
+            couponCode?: string;
+            discount?: number;
             updatedAt?: string;
           }
         | undefined;
@@ -218,7 +235,9 @@ export async function POST(request: Request) {
         previous.pincode === pincode &&
         previous.deliveryCharge === deliveryCharge &&
         previous.taxRate === taxRate &&
-        previous.taxAmount === taxAmount
+        previous.taxAmount === taxAmount &&
+        previous.couponCode === couponCode &&
+        previous.discount === discount
       )
         return previous;
       if (
@@ -237,6 +256,8 @@ export async function POST(request: Request) {
           deliveryCharge,
           taxRate,
           taxAmount,
+          couponCode,
+          discount,
           updatedAt: now,
           createdAt: previous?.updatedAt || now,
         },
@@ -251,6 +272,7 @@ export async function POST(request: Request) {
         amount: attempt.amount,
         currency: attempt.currency,
         internalOrderId: attempt.internalOrderId,
+        discount: attempt.discount || 0,
       });
 
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
@@ -309,7 +331,8 @@ export async function POST(request: Request) {
         },
         items: verifiedItems,
         subtotal,
-        discount: 0,
+        discount,
+        couponCode: couponCode || null,
         deliveryCharge,
         taxRate,
         taxAmount,
@@ -343,6 +366,8 @@ export async function POST(request: Request) {
           },
           items: verifiedItems,
           subtotal,
+          discount,
+          couponCode: couponCode || null,
           deliveryCharge,
           taxRate,
           taxAmount,
@@ -365,6 +390,8 @@ export async function POST(request: Request) {
           deliveryCharge,
           taxRate,
           taxAmount,
+          couponCode,
+          discount,
           updatedAt: createdAt,
         },
         { merge: true },
@@ -377,6 +404,7 @@ export async function POST(request: Request) {
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
       internalOrderId: created.id,
+      discount,
     });
   } catch (error) {
     return NextResponse.json(

@@ -64,6 +64,10 @@ export default function CheckoutPage() {
   const [userId, setUserId] = useState("");
   const [userReady, setUserReady] = useState(false);
   const [taxRate, setTaxRate] = useState(0);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponMessage, setCouponMessage] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
   const [error, setError] = useState("");
   const [processing, setProcessing] = useState(false);
   const checkoutKey = useRef(crypto.randomUUID());
@@ -180,11 +184,38 @@ export default function CheckoutPage() {
       .filter((line) => line.quantity > 0);
     setLines(next);
     writeCart(next);
+    if (appliedCoupon) {
+      setAppliedCoupon(null);
+      setCouponMessage("Your bag changed. Apply the coupon again.");
+    }
   };
   const subtotal = useMemo(
     () => lines.reduce((total, line) => total + line.price * line.quantity, 0),
     [lines],
   );
+  const applyCoupon = async (event: FormEvent) => {
+    event.preventDefault();
+    if (couponLoading) return;
+    setCouponLoading(true);
+    setCouponMessage("");
+    try {
+      const response = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponInput, subtotal }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to apply coupon.");
+      setAppliedCoupon({ code: result.code, discount: Number(result.discount) || 0 });
+      setCouponInput(result.code);
+      setCouponMessage(result.message || "Coupon applied successfully.");
+    } catch (couponError) {
+      setAppliedCoupon(null);
+      setCouponMessage(couponError instanceof Error ? couponError.message : "Unable to apply coupon.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
   const pincodeValid = /^\d{6}$/.test(form.pincode);
   const selectedArea = pincodeValid ? areas[form.pincode] : undefined;
   const delivery = selectedArea
@@ -193,8 +224,9 @@ export default function CheckoutPage() {
       ? 0
       : selectedArea.deliveryCharge
     : undefined;
-  const taxAmount = Math.round(subtotal * taxRate) / 100;
-  const total = subtotal + (delivery ?? 0) + taxAmount;
+  const discount = appliedCoupon?.discount || 0;
+  const taxAmount = Math.round((subtotal - discount) * taxRate) / 100;
+  const total = subtotal - discount + (delivery ?? 0) + taxAmount;
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (paymentOpening.current) return;
@@ -222,6 +254,7 @@ export default function CheckoutPage() {
           items: lines,
           address: form,
           checkoutKey: checkoutKey.current,
+          couponCode: appliedCoupon?.code || "",
         }),
       });
       const created = await createResponse.json();
@@ -490,6 +523,10 @@ export default function CheckoutPage() {
               <b>{money(subtotal)}</b>
             </p>
             <p>
+              <span>Coupon{appliedCoupon ? ` · ${appliedCoupon.code}` : " discount"}</span>
+              <b>{discount ? `−${money(discount)}` : money(0)}</b>
+            </p>
+            <p>
               <span>Delivery fee</span>
               <b>
                 {delivery === undefined
@@ -508,6 +545,15 @@ export default function CheckoutPage() {
               <b>{money(total)}</b>
             </p>
           </div>
+          <form className="coupon-form" onSubmit={applyCoupon}>
+            <label htmlFor="coupon-code">HAVE A COUPON?</label>
+            <div className="coupon-input-row">
+              <input id="coupon-code" value={couponInput} onChange={(event) => { setCouponInput(event.target.value.toUpperCase()); if (appliedCoupon) { setAppliedCoupon(null); setCouponMessage("Cart or code changed. Apply the coupon again."); } }} placeholder="Enter code" autoCapitalize="characters" />
+              <button type="submit" disabled={couponLoading || !couponInput.trim()}>{couponLoading ? "CHECKING…" : appliedCoupon ? "APPLIED" : "APPLY"}</button>
+            </div>
+            {couponMessage && <small className={appliedCoupon ? "coupon-success" : "coupon-error"}>{couponMessage}</small>}
+            {appliedCoupon && <button type="button" className="coupon-remove" onClick={() => { setAppliedCoupon(null); setCouponMessage("Coupon removed."); }}>REMOVE COUPON</button>}
+          </form>
           <small>
             Delivery charge is set automatically for your exact pincode.
           </small>
