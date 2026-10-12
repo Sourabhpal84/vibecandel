@@ -3595,3 +3595,24 @@ body { background:var(--paper); color:var(--ink); }
   .revenue-cards div { min-width:0; padding:16px; }
   .revenue-cards b { font-size:clamp(20px,6vw,28px); overflow-wrap:anywhere; }
 }
+.admin-product { grid-template-columns:60px minmax(0,1fr) auto auto auto; }
+.sort-hint { color:#85776e; font-size:12px; line-height:1.5; margin:8px 0 0; }
+.tree-reorder,.product-reorder { display:inline-flex; align-items:center; gap:3px; }
+.tree-reorder button,.product-reorder button { width:30px; height:30px; display:grid; place-items:center; border:1px solid var(--line); border-radius:50%; background:#fff; color:#654a3e; cursor:pointer; }
+.tree-reorder button:disabled,.product-reorder button:disabled { opacity:.38; cursor:not-allowed; }
+.tree-reorder button:not(:disabled):hover,.product-reorder button:not(:disabled):hover { background:#efe4d9; }
+@media (max-width:800px) {
+  .admin-product { grid-template-columns:48px minmax(0,1fr) auto; }
+  .admin-product > img { grid-column:1; grid-row:1 / span 2; }
+  .admin-product > div:nth-child(2) { grid-column:2; grid-row:1; }
+  .admin-product > strong { grid-column:3; grid-row:1; align-self:start; }
+  .admin-product .product-reorder { grid-column:2; grid-row:2; }
+  .admin-product .admin-product-actions { grid-column:3; grid-row:2; }
+}
+@media (max-width:480px) {
+  .admin-product { grid-template-columns:42px minmax(0,1fr) auto; }
+  .admin-product > img { width:42px; height:54px; }
+  .admin-product > strong { grid-column:2; grid-row:2; }
+  .admin-product .product-reorder { grid-column:2; grid-row:3; }
+  .admin-product .admin-product-actions { grid-column:3; grid-row:3; }
+}

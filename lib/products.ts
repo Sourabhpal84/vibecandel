@@ -33,6 +33,7 @@ export type Product = {
   stock?: number;
   active?: boolean;
   published?: boolean;
+  sortOrder?: number;
 };
 
 export function isApparelProduct(product: Pick<Product, "name" | "category">) {

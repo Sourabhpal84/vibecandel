@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ImagePlus, Plus, Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, ImagePlus, Plus, Trash2, Pencil } from "lucide-react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { CategoryNode, slugify } from "@/lib/category-tree";
@@ -10,6 +10,7 @@ import {
   addCategory,
   deleteCategory,
   getCategories,
+  saveCategoryOrder,
   updateCategory,
 } from "@/lib/firestore-catalog";
 
@@ -26,6 +27,7 @@ export default function AdminCategoriesPage() {
   const [ready, setReady] = useState(false);
   const [nodes, setNodes] = useState<CategoryNode[]>(seed);
   const [notice, setNotice] = useState("");
+  const [movingNodeId, setMovingNodeId] = useState<string | null>(null);
   useEffect(
     () =>
       onAuthStateChanged(auth, (current) => {
@@ -100,6 +102,22 @@ export default function AdminCategoriesPage() {
       setNotice(catalogError(error));
     }
   };
+  const move = async (node: CategoryNode, direction: -1 | 1) => {
+    const siblings = nodes.filter((item) => item.parentId === node.parentId).sort((a, b) => a.sortOrder - b.sortOrder);
+    const index = siblings.findIndex((item) => item.id === node.id);
+    const target = index + direction;
+    if (target < 0 || target >= siblings.length || movingNodeId) return;
+    const reordered = [...siblings];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    setMovingNodeId(node.id);
+    try {
+      await saveCategoryOrder(reordered);
+      const positions = new Map(reordered.map((item, position) => [item.id, (position + 1) * 100] as const));
+      setNodes((current) => current.map((item) => positions.has(item.id) ? { ...item, sortOrder: positions.get(item.id)! } : item));
+      setNotice(`${node.name} position saved.`);
+    } catch (error) { setNotice(catalogError(error)); }
+    finally { setMovingNodeId(null); }
+  };
   const tree = (parentId: string | null, level = 0): React.ReactNode =>
     nodes
       .filter((node) => node.parentId === parentId)
@@ -115,6 +133,10 @@ export default function AdminCategoriesPage() {
           <span className="tree-count">
             {nodes.filter((child) => child.parentId === node.id).length}{" "}
             subcategories
+          </span>
+          <span className="tree-reorder" aria-label={`Reorder ${node.name}`}>
+            <button type="button" onClick={() => move(node, -1)} disabled={movingNodeId !== null || nodes.filter((item) => item.parentId === node.parentId).sort((a, b) => a.sortOrder - b.sortOrder)[0]?.id === node.id} aria-label={`Move ${node.name} up`} title="Move up"><ChevronUp size={15}/></button>
+            <button type="button" onClick={() => move(node, 1)} disabled={movingNodeId !== null || nodes.filter((item) => item.parentId === node.parentId).sort((a, b) => a.sortOrder - b.sortOrder).slice(-1)[0]?.id === node.id} aria-label={`Move ${node.name} down`} title="Move down"><ChevronDown size={15}/></button>
           </span>
           <button className="tree-add" onClick={() => rename(node)}>
             <Pencil size={14} /> RENAME
@@ -150,7 +172,8 @@ export default function AdminCategoriesPage() {
             <h1>Categories & subcategories</h1>
             <p>
               Create unlimited nested levels. Products can be assigned to the
-              final category node.
+              final category node. Use the arrows on each category to set its
+              display order within its parent category.
             </p>
           </div>
           <button className="button button-dark" onClick={() => add(null)}>
