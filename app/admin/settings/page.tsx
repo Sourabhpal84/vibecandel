@@ -122,7 +122,7 @@ export default function SettingsPage() {
           <section className="hero-image-settings wide">
             <p className="eyebrow">HOMEPAGE HERO</p>
             <h2>Background image</h2>
-            <p>Use separate public image URLs for desktop and mobile. Images display in full without cropping; empty mobile URL uses the desktop image.</p>
+            <p>Desktop and laptop visitors use the Desktop URL; phones use the Mobile URL. Leave Mobile URL empty to reuse the Desktop image. Save settings to update the storefront.</p>
             <label>
               Desktop image URL
               <input

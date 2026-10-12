@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { CSSProperties, useEffect, useMemo, useState } from "react";
 import { ArrowRight, Heart, Menu, Search, ShoppingBag, UserRound, X, Plus, Minus, Flame, Sparkles, Gift, Leaf } from "lucide-react";
+import { doc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { isApparelProduct, Product } from "@/lib/products";
-import { watchCatalog } from "@/lib/firestore-catalog";
+import { firebaseConfigured, watchCatalog } from "@/lib/firestore-catalog";
 import { CategoryNode, descendantsOf } from "@/lib/category-tree";
 import { CART_UPDATED_EVENT, CartLine, addCartLine, readCart, writeCart } from "@/lib/cart";
 import { useToast } from "@/components/toast";
@@ -26,6 +27,7 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [welcomeVisible, setWelcomeVisible] = useState(false);
   const [catalogReady, setCatalogReady] = useState(false);
+  const [heroImages, setHeroImages] = useState({ desktop: "", mobile: "" });
 
   useEffect(() => {
     try {
@@ -44,6 +46,17 @@ export default function Home() {
   }, []);
   useEffect(() => auth ? onAuthStateChanged(auth, setUser) : undefined, []);
   useEffect(() => watchCatalog((products) => { setCatalog(products); setCatalogReady(true); }, setCategoryNodes, (error) => { console.warn("Live catalog update failed:", error); setCatalogReady(true); }), []);
+  useEffect(() => {
+    if (!firebaseConfigured) return;
+    return onSnapshot(doc(db, "settings", "store"), (snapshot) => {
+      if (!snapshot.exists()) return setHeroImages({ desktop: "", mobile: "" });
+      const settings = snapshot.data();
+      setHeroImages({
+        desktop: String(settings.heroImageDesktop || settings.heroImage || "").trim(),
+        mobile: String(settings.heroImageMobile || "").trim(),
+      });
+    }, (error) => console.warn("Homepage image settings could not be loaded:", error));
+  }, []);
 
   useEffect(() => {
     if (!welcomeVisible || !catalogReady) return;
@@ -56,15 +69,18 @@ export default function Home() {
       if (image.complete) resolve();
     });
     const candleImages = catalog.filter((item) => item.active !== false && item.published !== false && !isApparelProduct(item)).slice(0, 4).map((item) => item.image).filter(Boolean);
+    const activeHeroImage = window.matchMedia("(max-width: 800px)").matches
+      ? heroImages.mobile || heroImages.desktop || heroImage
+      : heroImages.desktop || heroImage;
     const imagesReady = Promise.race([
-      Promise.all([heroImage, "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1200&q=85", ...candleImages].map(preload)),
+      Promise.all([activeHeroImage, "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1200&q=85", ...candleImages].map(preload)),
       new Promise<void>((resolve) => window.setTimeout(resolve, 4500)),
     ]);
     Promise.all([imagesReady, new Promise<void>((resolve) => window.setTimeout(resolve, 1700))]).then(() => {
       if (!cancelled) setWelcomeVisible(false);
     });
     return () => { cancelled = true; };
-  }, [welcomeVisible, catalogReady, catalog]);
+  }, [welcomeVisible, catalogReady, catalog, heroImages]);
 
   useEffect(() => {
     if (!welcomeVisible) return;
@@ -97,6 +113,13 @@ export default function Home() {
     setCart(next); writeCart(next);
   };
   const roots = categoryNodes.filter((item) => !item.parentId && catalog.some((product) => product.active !== false && product.published !== false && !isApparelProduct(product) && descendantsOf(categoryNodes, item.id).has(product.categoryId || product.category.toLowerCase().replace(/[^a-z0-9]+/g, "-"))));
+  const desktopHeroImage = heroImages.desktop || heroImage;
+  const mobileHeroImage = heroImages.mobile || desktopHeroImage;
+  const cssImageUrl = (url: string) => `url("${url.replaceAll('"', "%22")}")`;
+  const heroStyle = {
+    "--hero-image-desktop": cssImageUrl(desktopHeroImage),
+    "--hero-image-mobile": cssImageUrl(mobileHeroImage),
+  } as CSSProperties;
 
   return <main className="candle-store">
     {welcomeVisible && <div className="welcome-splash" role="status" aria-label="Welcome to Shavibe Candle"><div className="welcome-splash-content"><div className="welcome-candle-art" aria-hidden="true"><span className="welcome-orbit welcome-orbit-one"/><span className="welcome-orbit welcome-orbit-two"/><span className="welcome-flame"><i/></span><span className="welcome-wick"/><span className="welcome-candle"><i>✳</i></span><span className="welcome-spark welcome-spark-one">✦</span><span className="welcome-spark welcome-spark-two">✧</span><span className="welcome-spark welcome-spark-three">✳</span></div><p className="welcome-kicker">A LITTLE GLOW IS ON ITS WAY</p><h2>WELCOME TO<br/><i>SHAVIBE</i></h2><span className="welcome-brand-note">C A N D L E</span><div className="welcome-progress"><span/></div><p className="welcome-signoff">Find your feel-good glow</p></div></div>}
@@ -107,7 +130,7 @@ export default function Home() {
       <a className="logo candle-logo" href="#top"><span className="logo-sun">✳</span><span>SHAVIBE <i>CANDLE</i></span></a>
       <div className="actions"><button className="icon" onClick={() => document.getElementById("search")?.focus()} aria-label="Search"><Search/></button><a className="icon" href={user ? "/account" : "/account/login"} aria-label="My account"><UserRound/></a><button className="bag" onClick={() => setCartOpen(true)} aria-label="Open bag"><ShoppingBag/><b>{cart.reduce((sum, item) => sum + item.quantity, 0) || ""}</b></button></div>
     </header>
-    <section className="candle-hero" id="top" style={{ backgroundImage: `linear-gradient(90deg, rgba(55,35,29,.76), rgba(55,35,29,.08)), url("${heroImage}")` }}>
+    <section className="candle-hero" id="top" style={heroStyle}>
       <div className="hero-copy candle-hero-copy"><p className="eyebrow">A LITTLE GLOW GOES A LONG WAY</p><h1>Light up<br/>your <i>lovely.</i></h1><p className="hero-sub">Handpicked scents and feel-good candles for slow evenings, soft mornings, and every lovely moment in between.</p><a className="button candle-cta" href="#shop">SHOP CANDLES <ArrowRight size={17}/></a><div className="hero-stamp"><span>POURED WITH<br/>A LITTLE LOVE</span><Flame size={24}/></div></div>
       <div className="hero-caption">SCENT YOUR SPACE · SET YOUR MOOD</div>
     </section>
