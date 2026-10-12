@@ -3519,3 +3519,79 @@ body { background:var(--paper); color:var(--ink); }
   .candle-detail-header { padding:18px 5vw; }.candle-detail-header .back-link { font-size:0; gap:0; }.candle-detail-header .back-link svg { width:19px; height:19px; }.candle-detail-header .candle-logo { font-size:11px; }.candle-detail-grid { grid-template-columns:1fr; gap:20px; padding:20px 5vw 70px; }.candle-main-image { aspect-ratio:.95; border-radius:10px 10px 75px 10px; }.candle-product-info { padding:15px 0; }.candle-product-info>h1 { font-size:46px; }.candle-detail-footnote { display:grid; }
 }
 @media (max-width:380px) { .candle-header .actions { gap:7px; }.candle-header .actions>.icon:first-child { display:none; }.candle-header .candle-logo { font-size:10px; letter-spacing:.1em; }.candle-product .quick-add { font-size:8px; gap:8px; } }
+
+/* Admin screens: keep controls reachable and prevent narrow-screen overflow. */
+@media (max-width:800px) {
+  .admin-page { min-width:0; overflow-x:hidden; }
+  .admin-header { height:auto; min-height:68px; padding:14px 5vw; gap:12px; flex-wrap:wrap; }
+  .admin-header .logo { font-size:clamp(12px,3.5vw,16px); }
+  .admin-header h1 { margin:0; font-size:clamp(20px,5vw,28px); }
+  .admin-header-actions { width:100%; display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+  .admin-header-actions .admin-badge { max-width:100%; overflow-wrap:anywhere; }
+  .admin-header-actions .button { min-height:42px; }
+  .admin-layout { min-width:0; }
+  .admin-nav { width:100%; overflow-x:auto; overscroll-behavior-x:contain; scrollbar-width:thin; scroll-snap-type:x proximity; }
+  .admin-nav a { flex:0 0 auto; min-height:40px; display:flex; align-items:center; scroll-snap-align:start; }
+  .admin-content { min-width:0; padding:30px 5vw 72px; }
+  .admin-intro { gap:12px; padding-bottom:25px; margin-bottom:30px; }
+  .admin-intro h1 { font-size:clamp(32px,8vw,42px); overflow-wrap:anywhere; }
+  .admin-section { min-width:0; padding-bottom:38px; margin-bottom:38px; }
+  .admin-section h2 { font-size:clamp(23px,6vw,30px); }
+  .admin-section-head > .button { max-width:100%; white-space:normal; }
+  .admin-form { grid-template-columns:minmax(0,1fr); }
+  .admin-form input:not([type="checkbox"]), .admin-form select, .admin-form textarea,
+  .delivery-area-form input, .tax-rate-form input, .coupon-admin-form input:not([type="checkbox"]),
+  .coupon-admin-form select, .complaint-admin-edit textarea { min-height:44px; font-size:16px; }
+  .admin-form label { min-width:0; }
+  .image-upload { min-width:0; padding:15px; }
+  .image-input { min-width:0; }
+  .admin-product { grid-template-columns:48px minmax(0,1fr) auto; gap:10px; }
+  .admin-product > div:nth-child(2) { min-width:0; overflow-wrap:anywhere; }
+  .admin-product strong { display:block; white-space:nowrap; }
+  .admin-product-actions { grid-column:2 / -1; justify-content:flex-start; }
+  .category-manager { padding:35px 5vw 72px; }
+  .category-manager .admin-intro { display:flex; flex-direction:column; align-items:flex-start; }
+  .category-tree-row { min-width:0; gap:10px; }
+  .tree-count { margin-left:0; }
+  .orders-dashboard { padding-top:28px; }
+  .order-toolbar { min-width:0; }
+  .order-filters { display:flex; max-width:100%; overflow-x:auto; overscroll-behavior-x:contain; scrollbar-width:thin; }
+  .order-filters button { flex:0 0 auto; min-height:40px; }
+  .orders-table { min-width:0; }
+  .order-row { min-width:0; }
+  .order-row > * { min-width:0; overflow-wrap:anywhere; }
+  .order-row .status-badge { width:max-content; max-width:100%; }
+  .delivery-areas-list, .admin-complaint-list, .coupon-list, .revenue-cards { min-width:0; }
+  .coupon-admin { padding:35px 5vw 72px; }
+  .complaints-admin { padding-top:28px; }
+  .admin-login { padding:16px; }
+  .admin-login-card { padding:clamp(24px,7vw,42px); }
+  .admin-login-card h1 { font-size:clamp(34px,9vw,46px); }
+  .admin-orders-shortcut { right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); min-height:44px; display:flex; align-items:center; justify-content:center; padding:12px 18px; }
+}
+@media (max-width:480px) {
+  .admin-header { justify-content:space-between; }
+  .admin-header .admin-badge { font-size:8px; letter-spacing:.07em; }
+  .admin-header-actions .button { flex:1 1 auto; justify-content:center; padding-inline:10px; font-size:9px; }
+  .admin-nav { gap:16px; }
+  .admin-content { padding-inline:16px; }
+  .admin-intro h1 { font-size:32px; }
+  .admin-product { grid-template-columns:42px minmax(0,1fr); }
+  .admin-product img { width:42px; height:54px; }
+  .admin-product strong { grid-column:2; }
+  .admin-product-actions { grid-column:2; }
+  .image-inputs { gap:8px; }
+  .image-input { height:105px; }
+  .orders-heading { gap:12px; align-items:flex-start; }
+  .order-stats { gap:8px; }
+  .order-stats article { padding:13px; }
+  .order-row { gap:11px; }
+  .delivery-areas-head, .delivery-areas-list article { padding:12px; gap:8px; }
+  .delivery-area-form, .delivery-area-note { padding:16px; }
+  .admin-complaint-list article { padding:16px; }
+  .admin-complaint-head { flex-direction:column; }
+  .complaint-admin-actions { display:flex; flex-wrap:wrap; gap:8px; }
+  .revenue-cards { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .revenue-cards div { min-width:0; padding:16px; }
+  .revenue-cards b { font-size:clamp(20px,6vw,28px); overflow-wrap:anywhere; }
+}
