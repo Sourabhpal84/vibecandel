@@ -1990,14 +1990,25 @@ details p {
   color: #8a2a2a;
   padding: 13px;
   font-size: 12px;
+  line-height: 1.55;
+  border-radius: 8px;
 }
+.checkout-address-missing,.saved-checkout-address { min-width:0; padding:16px; border:1px solid #ead7c9; border-radius:10px; background:#fffaf4; color:#593f35; }
+.checkout-address-missing p,.saved-checkout-address p { margin:8px 0 12px; color:#79665c; font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
+.checkout-address-missing .button { min-height:44px; border-radius:99px; }
+.saved-checkout-address>a { display:inline-block; color:#805c4d; font:9px "DM Mono"; letter-spacing:.08em; text-decoration:underline; }
+.profile-save-success { border:1px solid #c9dfce; border-radius:9px; background:#e7f2e8; color:#315e3d; line-height:1.6; }
+.profile-return-checkout { margin:0 0 20px; border-radius:99px; gap:12px; }
 @media (max-width: 800px) {
   .food-checkout {
     display: flex;
     flex-direction: column;
-    padding: 35px 5vw 90px;
-    gap: 35px;
+    width:100%;
+    min-width:0;
+    padding: 28px 16px 90px;
+    gap: 26px;
   }
+  .food-checkout > section,.food-checkout .summary { width:100%; min-width:0; }
   .food-checkout h1 {
     margin-bottom: 28px;
   }
@@ -2030,12 +2041,25 @@ details p {
     margin: 80px auto;
   }
   .summary-line {
-    grid-template-columns: 58px 1fr auto;
+    grid-template-columns: 52px minmax(0,1fr) auto;
+    gap:9px;
+    min-width:0;
   }
   .summary-line img {
-    width: 58px;
-    height: 68px;
+    width: 52px;
+    height: 62px;
   }
+  .summary-line>div { min-width:0; overflow-wrap:anywhere; }
+  .summary-line b { overflow-wrap:anywhere; }
+  .summary-line strong { min-width:max-content; font-size:11px; }
+  .summary-quantity { gap:7px; flex-wrap:wrap; }
+  .summary-total p { min-width:0; gap:12px; }
+  .summary-total p span { min-width:0; overflow-wrap:anywhere; }
+  .coupon-form { min-width:0; padding:14px; }
+  .coupon-input-row { min-width:0; }
+  .coupon-input-row input { width:0; font-size:16px; }
+  .checkout-page .detail-header { padding-inline:14px; gap:8px; }
+  .checkout-page .detail-header .eyebrow { font-size:8px; text-align:right; }
 }
 .checkout-form select {
   display: block;

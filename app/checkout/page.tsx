@@ -7,6 +7,7 @@ import { auth, db } from "@/lib/firebase";
 import { CART_UPDATED_EVENT, CartLine, readCart, writeCart } from "@/lib/cart";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { getDeliveryCharge, FREE_DELIVERY_THRESHOLD } from "@/lib/commerce";
+import { useToast } from "@/components/toast";
 
 declare global {
   interface Window {
@@ -41,6 +42,7 @@ const loadRazorpay = () =>
   });
 
 export default function CheckoutPage() {
+  const { notify } = useToast();
   const [lines, setLines] = useState<CartLine[]>([]);
   const [form, setForm] = useState({
     name: "",
@@ -191,8 +193,11 @@ export default function CheckoutPage() {
       window.location.href = "/account/login?next=%2Fcheckout";
       return;
     }
-    if (!form.name || !form.phone || !form.address || !form.city || !form.state)
-      return setError("Please save your delivery address in your profile before ordering.");
+    if (!form.name || !form.phone || !form.address || !form.city || !form.state) {
+      setError("Add and save your delivery address before placing the order.");
+      notify({ kind: "warning", title: "Delivery address needed", message: "Add your name, phone, street address, city and state in your profile, then return here to pay." });
+      return;
+    }
     paymentOpening.current = true;
     setProcessing(true);
     try {
@@ -340,11 +345,11 @@ export default function CheckoutPage() {
           <p className="eyebrow">SAVED DELIVERY DETAILS</p>
           <h1>Place your order</h1>
           <form className="checkout-form" onSubmit={submit}>
-            {form.address ? <div className="wide"><b>Delivering to</b><p>{form.name} · {form.phone}<br />{form.address}<br />{form.city}, {form.state}</p><Link href="/account/profile">EDIT SAVED ADDRESS</Link></div> : <div className="wide"><p>Add your delivery address once to your account before ordering.</p><Link className="button button-outline" href="/account/profile">ADD DELIVERY ADDRESS</Link></div>}
+            {form.name && form.phone && form.address && form.city && form.state ? <div className="wide saved-checkout-address"><b>Delivering to</b><p>{form.name} · {form.phone}<br />{form.address}<br />{form.city}, {form.state}</p><Link href="/account/profile?next=%2Fcheckout">EDIT SAVED ADDRESS</Link></div> : <div className="wide checkout-address-missing"><b>Delivery address not added yet</b><p>Add your address once. We’ll save it to your account for future orders.</p><Link className="button button-outline" href="/account/profile?next=%2Fcheckout">ADD DELIVERY ADDRESS</Link></div>}
             {error && <p className="checkout-error wide">{error}</p>}
             <button
               className="button button-dark wide checkout-button"
-              disabled={processing || !form.address || !form.city || !form.state}
+              disabled={processing || !userReady}
               type="submit"
             >
               {processing ? "OPENING PAYMENT…" : "PAY WITH RAZORPAY"}{" "}

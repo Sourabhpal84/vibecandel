@@ -5,20 +5,26 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { FormEvent, useEffect, useState } from 'react'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
+import { useToast } from '@/components/toast'
 
 type Profile = { name: string; phone: string; address: string; city: string; state: string; instructions: string }
 const empty: Profile = { name: '', phone: '', address: '', city: '', state: '', instructions: '' }
 
 export default function ProfilePage() {
+  const { notify } = useToast()
   const [uid, setUid] = useState('')
   const [form, setForm] = useState<Profile>(empty)
   const [addresses, setAddresses] = useState<Array<Profile & { id: string; isDefault?: boolean }>>([])
   const [message, setMessage] = useState('')
+  const [saveError, setSaveError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [returnToCheckout, setReturnToCheckout] = useState(false)
   const [loading, setLoading] = useState(true)
   useEffect(() => {
+    setReturnToCheckout(new URLSearchParams(window.location.search).get('next') === '/checkout')
     if (!auth) return
     return auth.onAuthStateChanged(async user => {
-      if (!user) { window.location.href = '/account/login'; return }
+      if (!user) { window.location.href = `/account/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`; return }
       setUid(user.uid)
       const snapshot = await getDoc(doc(db, 'customers', user.uid))
       const saved = snapshot.data() || {}
@@ -31,11 +37,20 @@ export default function ProfilePage() {
   }, [])
   const save = async (event: FormEvent) => {
     event.preventDefault()
+    if (!uid || saving) return
+    setSaving(true); setSaveError(''); setMessage('')
     const updatedAddresses = addresses.map(address => address.isDefault ? { ...address, ...form } : address)
-    await setDoc(doc(db, 'customers', uid), { ...form, ...(addresses.length ? { addresses: updatedAddresses } : {}), email: auth?.currentUser?.email || '', updatedAt: new Date().toISOString() }, { merge: true })
-    setAddresses(updatedAddresses)
-    setMessage('Profile and saved address updated.')
+    try {
+      await setDoc(doc(db, 'customers', uid), { ...form, ...(addresses.length ? { addresses: updatedAddresses } : {}), email: auth?.currentUser?.email || '', updatedAt: new Date().toISOString() }, { merge: true })
+      setAddresses(updatedAddresses)
+      setMessage('Saved! Your delivery address is ready for checkout.')
+      notify({ kind: 'success', title: 'Address saved', message: 'Your details are ready to use for this and future orders.' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not save your details.'
+      setSaveError(message)
+      notify({ kind: 'error', title: 'Could not save address', message })
+    } finally { setSaving(false) }
   }
   if (loading) return <main className="order-page"><p>Loading profile…</p></main>
-  return <main className="order-page"><header className="detail-header"><Link href="/account" className="back-link"><ArrowLeft size={16} /> ACCOUNT</Link><span className="logo">PROFILE</span></header><section className="account-content"><p className="eyebrow">PROFILE & SAVED ADDRESS</p><h1>Your details</h1><p>Save these once; checkout will use them automatically.</p>{message && <p className="admin-notice">{message}</p>}<form className="profile-form" onSubmit={save}><label>Full name<input required value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} /></label><label>Mobile number<input required type="tel" inputMode="numeric" value={form.phone} onChange={event => setForm({ ...form, phone: event.target.value.replace(/\D/g, '').slice(0, 10) })} /></label><label className="wide">Address<textarea required value={form.address} onChange={event => setForm({ ...form, address: event.target.value })} /></label><label>City<input required value={form.city} onChange={event => setForm({ ...form, city: event.target.value })} /></label><label>State<input required value={form.state} onChange={event => setForm({ ...form, state: event.target.value })} /></label><label className="wide">Delivery instructions<textarea value={form.instructions} onChange={event => setForm({ ...form, instructions: event.target.value })} /></label><button className="button button-dark wide" type="submit">SAVE DETAILS <ArrowRight size={16} /></button></form></section></main>
+  return <main className="order-page"><header className="detail-header"><Link href="/account" className="back-link"><ArrowLeft size={16} /> ACCOUNT</Link><span className="logo">PROFILE</span></header><section className="account-content"><p className="eyebrow">PROFILE & SAVED ADDRESS</p><h1>Your details</h1><p>Save these once; checkout will use them automatically.</p>{message && <p className="admin-notice profile-save-success" role="status">{message}</p>}{saveError && <p className="admin-notice login-error" role="alert">{saveError}</p>}{returnToCheckout && message && <Link className="button button-outline profile-return-checkout" href="/checkout">CONTINUE TO CHECKOUT <ArrowRight size={16} /></Link>}<form className="profile-form" onSubmit={save}><label>Full name<input required autoComplete="name" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} /></label><label>Mobile number<input required type="tel" autoComplete="tel" inputMode="numeric" value={form.phone} onChange={event => setForm({ ...form, phone: event.target.value.replace(/\D/g, '').slice(0, 10) })} /></label><label className="wide">Address<textarea required autoComplete="street-address" value={form.address} onChange={event => setForm({ ...form, address: event.target.value })} /></label><label>City<input required autoComplete="address-level2" value={form.city} onChange={event => setForm({ ...form, city: event.target.value })} /></label><label>State<input required autoComplete="address-level1" value={form.state} onChange={event => setForm({ ...form, state: event.target.value })} /></label><label className="wide">Delivery instructions<textarea value={form.instructions} onChange={event => setForm({ ...form, instructions: event.target.value })} /></label><button className="button button-dark wide" disabled={saving} type="submit">{saving ? 'SAVING…' : 'SAVE DETAILS'} <ArrowRight size={16} /></button></form></section></main>
 }
