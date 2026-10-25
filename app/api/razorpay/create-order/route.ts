@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb, requireUser } from "@/lib/firebase-admin";
-import { isValidPincode, normalizePincode } from "@/lib/commerce";
+import { getDeliveryCharge } from "@/lib/commerce";
 import { calculateCouponDiscount, Coupon } from "@/lib/coupons";
 
 export const runtime = "nodejs";
@@ -16,7 +16,8 @@ type Address = {
   name?: string;
   phone?: string;
   address?: string;
-  pincode?: string;
+  city?: string;
+  state?: string;
   instructions?: string;
 };
 type VerifiedItem = {
@@ -41,11 +42,9 @@ export async function POST(request: Request) {
     const user = await requireUser(request);
     const body = (await request.json()) as {
       items?: ClientItem[];
-      address?: Address;
       checkoutKey?: string;
       couponCode?: string;
     };
-    const address = body.address || {};
     const items = body.items || [];
     const checkoutKey = String(body.checkoutKey || "")
       .replace(/[^a-zA-Z0-9_-]/g, "")
@@ -55,21 +54,9 @@ export async function POST(request: Request) {
         { error: "Invalid checkout session. Please try again." },
         { status: 400 },
       );
-    if (
-      !items.length ||
-      !address.name ||
-      !address.phone ||
-      !address.address ||
-      !address.pincode
-    )
+    if (!items.length)
       return NextResponse.json(
-        { error: "Complete delivery details are required" },
-        { status: 400 },
-      );
-    const pincode = normalizePincode(address.pincode);
-    if (!isValidPincode(pincode))
-      return NextResponse.json(
-        { error: "Enter a valid 6-digit pincode." },
+        { error: "Your cart is empty." },
         { status: 400 },
       );
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET)
@@ -79,6 +66,17 @@ export async function POST(request: Request) {
       );
 
     const adminDb = getAdminDb();
+    const customerSnapshot = await adminDb.collection("customers").doc(user.uid).get();
+    const customerProfile = customerSnapshot.data() || {};
+    const selectedAddress = (Array.isArray(customerProfile.addresses)
+      ? customerProfile.addresses.find((saved: Address & { isDefault?: boolean }) => saved.isDefault && saved.address)
+      : undefined) || {};
+    const address = { ...customerProfile, ...selectedAddress } as Address;
+    if (!address.name || !address.phone || !address.address || !address.city || !address.state)
+      return NextResponse.json(
+        { error: "Add your name, phone and delivery address in your profile before ordering." },
+        { status: 400 },
+      );
     const verifiedItems: VerifiedItem[] = [];
     for (const item of items) {
       const quantity = Math.floor(Number(item.quantity));
@@ -154,24 +152,6 @@ export async function POST(request: Request) {
         total: unitPrice * quantity,
       });
     }
-    const areaSnapshot = await adminDb
-      .collection("serviceAreas")
-      .doc(pincode)
-      .get();
-    const configuredDeliveryCharge = Number(
-      areaSnapshot.data()?.deliveryCharge,
-    );
-    const freeDeliveryAbove = Number(areaSnapshot.data()?.freeDeliveryAbove);
-    if (
-      !areaSnapshot.exists ||
-      areaSnapshot.data()?.enabled === false ||
-      !Number.isFinite(configuredDeliveryCharge) ||
-      configuredDeliveryCharge < 0
-    )
-      return NextResponse.json(
-        { error: "Delivery is currently unavailable at this pincode." },
-        { status: 400 },
-      );
     const subtotal = verifiedItems.reduce(
       (total, item) => total + item.total,
       0,
@@ -188,12 +168,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error instanceof Error ? error.message : "This coupon cannot be used." }, { status: 400 });
       }
     }
-    const deliveryCharge =
-      Number.isFinite(freeDeliveryAbove) &&
-      freeDeliveryAbove > 0 &&
-      subtotal >= freeDeliveryAbove
-        ? 0
-        : configuredDeliveryCharge;
+    const deliveryCharge = getDeliveryCharge(subtotal);
     const configuredTaxRate = Number(
       (await adminDb.collection("settings").doc("tax").get()).data()?.rate,
     );
@@ -219,7 +194,6 @@ export async function POST(request: Request) {
             amount?: number;
             currency?: string;
             internalOrderId?: string;
-            pincode?: string;
             deliveryCharge?: number;
             taxRate?: number;
             taxAmount?: number;
@@ -232,7 +206,6 @@ export async function POST(request: Request) {
         previous?.status === "READY" &&
         previous.razorpayOrderId &&
         previous.internalOrderId &&
-        previous.pincode === pincode &&
         previous.deliveryCharge === deliveryCharge &&
         previous.taxRate === taxRate &&
         previous.taxAmount === taxAmount &&
@@ -252,7 +225,6 @@ export async function POST(request: Request) {
         {
           customerId: user.uid,
           status: "CREATING",
-          pincode,
           deliveryCharge,
           taxRate,
           taxAmount,
@@ -326,7 +298,8 @@ export async function POST(request: Request) {
           name: address.name,
           phone: address.phone,
           address: address.address,
-          pincode,
+          city: address.city,
+          state: address.state,
           instructions: address.instructions || "",
         },
         items: verifiedItems,
@@ -362,7 +335,8 @@ export async function POST(request: Request) {
             name: address.name,
             phone: address.phone,
             address: address.address,
-            pincode,
+            city: address.city,
+            state: address.state,
             instructions: address.instructions || "",
           },
           items: verifiedItems,
@@ -388,7 +362,6 @@ export async function POST(request: Request) {
           internalOrderId: orderRef.id,
           amount: razorpayOrder.amount,
           currency: razorpayOrder.currency,
-          pincode,
           deliveryCharge,
           taxRate,
           taxAmount,

@@ -41,7 +41,8 @@ type Order = {
   customer?: { name?: string; phone?: string; email?: string };
   deliveryAddress?: {
     address?: string;
-    pincode?: string;
+    city?: string;
+    state?: string;
     instructions?: string;
   };
   items?: Array<{
@@ -195,7 +196,7 @@ export default function AdminOrderDetail({
             <p>
               {order.deliveryAddress?.address || "—"}
               <br />
-              Pincode — {order.deliveryAddress?.pincode || "—"}
+              {order.deliveryAddress?.city}, {order.deliveryAddress?.state}
             </p>
             {order.deliveryAddress?.instructions && (
               <small>
@@ -250,7 +251,7 @@ export default function AdminOrderDetail({
               <b>{money(order.discount)}</b>
             </p>
             <p>
-              <span>Delivery (pincode based)</span>
+              <span>Delivery</span>
               <b>{money(order.deliveryCharge)}</b>
             </p>
             <p className="grand">

@@ -5,12 +5,6 @@
   --muted: #777;
   --line: #d8d6d0;
 }
-.pincode-available {
-  color: #277143;
-}
-.pincode-unavailable {
-  color: #943131;
-}
 .delivery-areas-page {
   max-width: 1100px;
   margin: auto;
@@ -3475,12 +3469,6 @@ body { background:var(--paper); color:var(--ink); }
 .candle-detail-header { min-height:82px; padding-inline:5vw; border-bottom:1px solid #efe3d9; }
 .candle-detail-header .candle-logo { font-size:14px; }
 .candle-detail-header .back-link { color:#7b665a; font:10px "DM Mono"; letter-spacing:.1em; }
-.candle-pincode { margin:22px 0 26px; padding:17px; border-radius:10px; background:#f6eee6; }
-.candle-pincode label { display:flex; align-items:center; gap:8px; color:#72594c; font:9px "DM Mono"; letter-spacing:.08em; }
-.candle-pincode label svg { color:#b87359; }
-.candle-pincode input { width:100%; margin-top:12px; border:1px solid #e4d4c7; border-radius:6px; background:#fffdf9; padding:12px; outline:0; font-size:13px; }
-.candle-pincode input:focus { border-color:#ba8067; box-shadow:0 0 0 3px #ba80671c; }
-.candle-pincode small { display:block; margin-top:10px; font-size:11px; }
 .coupon-form { margin-top:22px; padding:18px; border:1px solid #ead7c9; border-radius:12px; background:#fffaf4; }
 .coupon-form label { display:block; color:#76594a; font:9px "DM Mono"; letter-spacing:.1em; margin-bottom:10px; }
 .coupon-input-row { display:flex; gap:8px; }

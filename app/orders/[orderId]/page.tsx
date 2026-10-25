@@ -21,7 +21,6 @@ type OrderData = {
     address?: string;
     city?: string;
     state?: string;
-    pincode?: string;
     instructions?: string;
   };
   statusHistory?: Array<{ status?: string; timestamp?: string }>;
@@ -198,8 +197,7 @@ export default function OrderPage({ params }: { params: { orderId: string } }) {
             <p>
               {order.deliveryAddress?.address}
               <br />
-              {order.deliveryAddress?.city}, {order.deliveryAddress?.state} —{" "}
-              {order.deliveryAddress?.pincode}
+              {order.deliveryAddress?.city}, {order.deliveryAddress?.state}
             </p>
             {order.deliveryAddress?.instructions && (
               <small>{order.deliveryAddress.instructions}</small>

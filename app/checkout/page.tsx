@@ -5,20 +5,14 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Minus, Plus, Trash2 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { CART_UPDATED_EVENT, CartLine, readCart, writeCart } from "@/lib/cart";
-import { collection, doc, getDoc, onSnapshot } from "firebase/firestore";
-import { normalizePincode } from "@/lib/commerce";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { getDeliveryCharge, FREE_DELIVERY_THRESHOLD } from "@/lib/commerce";
 
 declare global {
   interface Window {
     Razorpay?: new (options: Record<string, unknown>) => { open: () => void };
   }
 }
-type DeliveryArea = {
-  pincode?: string;
-  deliveryCharge?: number;
-  freeDeliveryAbove?: number | null;
-  enabled?: boolean;
-};
 const money = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 const PENDING_PAYMENT_KEY = "lattey-wala-pending-payment";
 type PendingPayment = { razorpayOrderId: string; internalOrderId?: string };
@@ -52,15 +46,10 @@ export default function CheckoutPage() {
     name: "",
     phone: "",
     address: "",
-    pincode: "",
+    city: "",
+    state: "",
     instructions: "",
   });
-  const [areas, setAreas] = useState<
-    Record<
-      string,
-      { deliveryCharge: number; freeDeliveryAbove?: number | null }
-    >
-  >({});
   const [userId, setUserId] = useState("");
   const [userReady, setUserReady] = useState(false);
   const [taxRate, setTaxRate] = useState(0);
@@ -118,36 +107,6 @@ export default function CheckoutPage() {
       }),
     [],
   );
-  useEffect(
-    () =>
-      onSnapshot(collection(db, "serviceAreas"), (snapshot) => {
-        const next: Record<
-          string,
-          { deliveryCharge: number; freeDeliveryAbove?: number | null }
-        > = {};
-        snapshot.docs.forEach((item) => {
-          const area = item.data() as DeliveryArea;
-          const pincode = normalizePincode(area.pincode || item.id);
-          const charge = Number(area.deliveryCharge);
-          if (
-            area.enabled !== false &&
-            /^\d{6}$/.test(pincode) &&
-            Number.isFinite(charge) &&
-            charge >= 0
-          )
-            next[pincode] = {
-              deliveryCharge: charge,
-              freeDeliveryAbove:
-                Number.isFinite(Number(area.freeDeliveryAbove)) &&
-                Number(area.freeDeliveryAbove) > 0
-                  ? Number(area.freeDeliveryAbove)
-                  : null,
-            };
-        });
-        setAreas(next);
-      }),
-    [],
-  );
   useEffect(() => {
     if (!auth) {
       setUserReady(true);
@@ -167,7 +126,8 @@ export default function CheckoutPage() {
             name: String(saved.name || ""),
             phone: String(saved.phone || ""),
             address: String(saved.address || ""),
-            pincode: normalizePincode(String(saved.pincode || "")),
+            city: String(saved.city || data.city || ""),
+            state: String(saved.state || data.state || ""),
             instructions: String(saved.instructions || ""),
           });
       }
@@ -216,14 +176,7 @@ export default function CheckoutPage() {
       setCouponLoading(false);
     }
   };
-  const pincodeValid = /^\d{6}$/.test(form.pincode);
-  const selectedArea = pincodeValid ? areas[form.pincode] : undefined;
-  const delivery = selectedArea
-    ? selectedArea.freeDeliveryAbove &&
-      subtotal >= selectedArea.freeDeliveryAbove
-      ? 0
-      : selectedArea.deliveryCharge
-    : undefined;
+  const delivery = getDeliveryCharge(subtotal);
   const discount = appliedCoupon?.discount || 0;
   const taxAmount = Math.round((subtotal - discount) * taxRate) / 100;
   const total = subtotal - discount + (delivery ?? 0) + taxAmount;
@@ -235,11 +188,11 @@ export default function CheckoutPage() {
       return setError("You’re offline. Reconnect before opening payment.");
     if (!lines.length) return setError("Your cart is empty.");
     if (!userReady || !userId || !auth?.currentUser) {
-      window.location.href = "/account/login";
+      window.location.href = "/account/login?next=%2Fcheckout";
       return;
     }
-    if (delivery === undefined)
-      return setError("Delivery is currently unavailable at this pincode.");
+    if (!form.name || !form.phone || !form.address || !form.city || !form.state)
+      return setError("Please save your delivery address in your profile before ordering.");
     paymentOpening.current = true;
     setProcessing(true);
     try {
@@ -384,96 +337,17 @@ export default function CheckoutPage() {
       </header>
       <div className="food-checkout">
         <section>
-          <p className="eyebrow">DELIVERY DETAILS</p>
+          <p className="eyebrow">SAVED DELIVERY DETAILS</p>
           <h1>Place your order</h1>
           <form className="checkout-form" onSubmit={submit}>
-            <label>
-              Full name *
-              <input
-                required
-                value={form.name}
-                onChange={(event) =>
-                  setForm({ ...form, name: event.target.value })
-                }
-              />
-            </label>
-            <label>
-              Mobile number *
-              <input
-                required
-                type="tel"
-                inputMode="numeric"
-                pattern="[0-9]{10}"
-                maxLength={10}
-                value={form.phone}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    phone: event.target.value.replace(/\D/g, ""),
-                  })
-                }
-              />
-            </label>
-            <label className="wide">
-              Full address *
-              <textarea
-                required
-                placeholder="Order will be delivered to this address. Please enter complete and correct address details."
-                value={form.address}
-                onChange={(event) =>
-                  setForm({ ...form, address: event.target.value })
-                }
-              />
-            </label>
-            <label>
-              Pincode *
-              <input
-                required
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]{6}"
-                maxLength={6}
-                value={form.pincode}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    pincode: normalizePincode(event.target.value),
-                  })
-                }
-              />
-              <small
-                className={`field-help ${pincodeValid ? (delivery === undefined ? "pincode-unavailable" : "pincode-available") : ""}`}
-              >
-                {pincodeValid
-                  ? delivery === undefined
-                    ? "Delivery is currently unavailable at this pincode."
-                    : delivery === 0 && selectedArea?.freeDeliveryAbove
-                      ? `Delivery available · FREE on orders above ${money(selectedArea.freeDeliveryAbove)}`
-                      : `Delivery available · ${money(delivery)} delivery charge${selectedArea?.freeDeliveryAbove ? ` · FREE above ${money(selectedArea.freeDeliveryAbove)}` : ""}`
-                  : "Enter your 6-digit pincode to check delivery availability."}
-              </small>
-            </label>
-            <label className="wide">
-              Delivery instructions{" "}
-              <textarea
-                placeholder="Optional"
-                value={form.instructions}
-                onChange={(event) =>
-                  setForm({ ...form, instructions: event.target.value })
-                }
-              />
-            </label>
+            {form.address ? <div className="wide"><b>Delivering to</b><p>{form.name} · {form.phone}<br />{form.address}<br />{form.city}, {form.state}</p><Link href="/account/profile">EDIT SAVED ADDRESS</Link></div> : <div className="wide"><p>Add your delivery address once to your account before ordering.</p><Link className="button button-outline" href="/account/profile">ADD DELIVERY ADDRESS</Link></div>}
             {error && <p className="checkout-error wide">{error}</p>}
             <button
               className="button button-dark wide checkout-button"
-              disabled={processing || delivery === undefined}
+              disabled={processing || !form.address || !form.city || !form.state}
               type="submit"
             >
-              {processing
-                ? "OPENING PAYMENT…"
-                : delivery === undefined
-                  ? "ENTER SERVICEABLE PINCODE"
-                  : "PAY WITH RAZORPAY"}{" "}
+              {processing ? "OPENING PAYMENT…" : "PAY WITH RAZORPAY"}{" "}
               <ArrowRight size={16} />
             </button>
           </form>
@@ -529,9 +403,7 @@ export default function CheckoutPage() {
             <p>
               <span>Delivery fee</span>
               <b>
-                {delivery === undefined
-                  ? "—"
-                  : delivery === 0
+                {delivery === 0
                     ? "FREE"
                     : money(delivery)}
               </b>
@@ -555,7 +427,7 @@ export default function CheckoutPage() {
             {appliedCoupon && <button type="button" className="coupon-remove" onClick={() => { setAppliedCoupon(null); setCouponMessage("Coupon removed."); }}>REMOVE COUPON</button>}
           </form>
           <small>
-            Delivery charge is set automatically for your exact pincode.
+            {`₹70 delivery below ₹${FREE_DELIVERY_THRESHOLD.toLocaleString("en-IN")} · Free delivery on orders of ₹${FREE_DELIVERY_THRESHOLD.toLocaleString("en-IN")} or more.`}
           </small>
         </aside>
       </div>

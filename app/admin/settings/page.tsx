@@ -12,8 +12,6 @@ import { auth, db } from "@/lib/firebase";
 type StoreSettings = {
   storeName: string;
   supportPhone: string;
-  deliveryCharge: string;
-  freeDeliveryThreshold: string;
   storeOpen: boolean;
   heroImageDesktop: string;
   heroImageMobile: string;
@@ -22,8 +20,6 @@ type StoreSettings = {
 const defaults: StoreSettings = {
   storeName: "SHAVIBE CANDLE",
   supportPhone: "",
-  deliveryCharge: "99",
-  freeDeliveryThreshold: "1999",
   storeOpen: true,
   heroImageDesktop: "",
   heroImageMobile: "",
@@ -70,8 +66,6 @@ export default function SettingsPage() {
     try {
       await setDoc(doc(db, "settings", "store"), {
         ...form,
-        deliveryCharge: Number(form.deliveryCharge),
-        freeDeliveryThreshold: Number(form.freeDeliveryThreshold),
         updatedAt: new Date().toISOString(),
       }, { merge: true });
       setMessage("Settings saved. The homepage hero updates automatically.");
@@ -154,8 +148,7 @@ export default function SettingsPage() {
           </section>
           <label>Store name<input value={form.storeName} onChange={(event) => setForm({ ...form, storeName: event.target.value })} /></label>
           <label>Support phone<input value={form.supportPhone} onChange={(event) => setForm({ ...form, supportPhone: event.target.value })} /></label>
-          <label>Delivery charge<input type="number" value={form.deliveryCharge} onChange={(event) => setForm({ ...form, deliveryCharge: event.target.value })} /></label>
-          <label>Free delivery threshold<input type="number" value={form.freeDeliveryThreshold} onChange={(event) => setForm({ ...form, freeDeliveryThreshold: event.target.value })} /></label>
+          <p className="wide">Delivery is ₹70 on orders below ₹2,000 and free on orders of ₹2,000 or more.</p>
           <label>Store available<select value={String(form.storeOpen)} onChange={(event) => setForm({ ...form, storeOpen: event.target.value === "true" })}><option value="true">Open</option><option value="false">Closed</option></select></label>
           <button className="button button-dark wide" disabled={saving}>{saving ? "SAVING…" : "SAVE SETTINGS"}</button>
         </form>
