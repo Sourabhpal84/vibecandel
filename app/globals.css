@@ -3508,6 +3508,28 @@ body { background:var(--paper); color:var(--ink); }
   .brand-story { grid-template-columns:1fr; }.story-photo { min-height:380px; }.story-copy { padding:65px 7vw 80px; }.story-copy h2 { font-size:clamp(44px,11vw,62px); }.reasons { padding:75px 5vw 80px; }.candle-store .reasons h2 { margin-bottom:32px; }.reason-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }.reason-grid article { min-height:195px; padding:17px; }.reason-grid h3 { font-size:19px; }.reason-grid p { font-size:11px; }.candle-footer .footer-links { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .candle-detail-header { padding:18px 5vw; }.candle-detail-header .back-link { font-size:0; gap:0; }.candle-detail-header .back-link svg { width:19px; height:19px; }.candle-detail-header .candle-logo { font-size:11px; }.candle-detail-grid { grid-template-columns:1fr; gap:20px; padding:20px 5vw 70px; }.candle-main-image { aspect-ratio:.95; border-radius:10px 10px 75px 10px; }.candle-product-info { padding:15px 0; }.candle-product-info>h1 { font-size:46px; }.candle-detail-footnote { display:grid; }
 }
+
+.analytics-page { max-width:1250px; margin:auto; }
+.analytics-note { max-width:850px; margin:0 0 28px; color:#79665c; font-size:12px; line-height:1.7; }
+.analytics-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:13px; margin-bottom:42px; }
+.analytics-stats article { display:grid; grid-template-columns:auto 1fr; align-items:center; column-gap:12px; row-gap:4px; padding:19px; border:1px solid #eaded3; border-radius:12px; background:#fffaf4; }
+.analytics-stats article>span { grid-row:span 2; width:38px; height:38px; display:grid; place-items:center; border-radius:50%; background:#f1e2d6; color:#765445; }
+.analytics-stats small { color:#8c7669; font-size:11px; }
+.analytics-stats b { color:#503a32; font-size:24px; }
+.analytics-section { margin-top:38px; }
+.analytics-section .admin-section-head { align-items:end; }
+.analytics-section .admin-section-head h2 { margin:5px 0; color:#503a32; font:30px "Playfair Display",serif; }
+.analytics-section .admin-section-head p:last-child { color:#827066; font-size:12px; }
+.analytics-list { overflow:hidden; border:1px solid #eaded3; border-radius:12px; background:#fffaf4; }
+.analytics-list article { display:grid; grid-template-columns:minmax(170px,1fr) minmax(120px,.7fr) minmax(140px,.8fr); gap:18px; align-items:center; padding:16px 19px; border-bottom:1px solid #efe4db; }
+.analytics-list article:last-child { border-bottom:0; }
+.analytics-list article>div { display:grid; gap:4px; min-width:0; }
+.analytics-list b { color:#503a32; font-size:13px; }
+.analytics-list small,.analytics-list article>span { color:#806d62; font-size:11px; line-height:1.55; overflow-wrap:anywhere; }
+.analytics-checkouts article { grid-template-columns:minmax(200px,1fr) auto minmax(85px,.35fr) minmax(145px,.65fr); }
+.analytics-status { width:max-content; border-radius:99px; padding:7px 10px; background:#e7eee0; color:#516b4a!important; font:8px "DM Mono"; letter-spacing:.06em; }
+.analytics-status.abandoned { background:#f5e3d7; color:#9a533c!important; }
+@media (max-width:800px) { .analytics-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }.analytics-section .admin-section-head { align-items:flex-start; flex-direction:column; }.analytics-list article,.analytics-checkouts article { grid-template-columns:minmax(0,1fr) auto; gap:9px 12px; padding:14px; }.analytics-list article>div { grid-column:1; }.analytics-list article>span,.analytics-list article>b,.analytics-list article>small { grid-column:2; grid-row:1; text-align:right; }.analytics-checkouts article>div { grid-row:1/4; }.analytics-checkouts article>.analytics-status { grid-row:1; }.analytics-checkouts article>b { grid-row:2; }.analytics-checkouts article>small { grid-row:3; } }
 @media (max-width:380px) { .candle-header .actions { gap:7px; }.candle-header .actions>.icon:first-child { display:none; }.candle-header .candle-logo { font-size:10px; letter-spacing:.1em; }.candle-product .quick-add { font-size:8px; gap:8px; } }
 
 /* Admin screens: keep controls reachable and prevent narrow-screen overflow. */

@@ -272,21 +272,9 @@ export async function POST(request: Request) {
       amount: number;
       currency: string;
     };
-    const created = await adminDb.runTransaction(async (transaction) => {
-      const counterRef = adminDb.collection("counters").doc("orders");
-      const counterSnapshot = await transaction.get(counterRef);
-      const nextNumber =
-        Number(counterSnapshot.data()?.nextNumber || 10000) + 1;
-      const orderRef = adminDb.collection("orders").doc();
+    await adminDb.runTransaction(async (transaction) => {
       const createdAt = new Date().toISOString();
-      const displayOrderId = `LW-${nextNumber}`;
-      transaction.set(
-        counterRef,
-        { nextNumber, updatedAt: createdAt },
-        { merge: true },
-      );
-      transaction.create(orderRef, {
-        displayOrderId,
+      const orderData = {
         userId: user.uid,
         customerId: user.uid,
         customer: {
@@ -311,20 +299,16 @@ export async function POST(request: Request) {
         taxAmount,
         totalAmount,
         paymentMethod: "RAZORPAY",
-        paymentStatus: "PENDING",
         paymentCurrency: razorpayOrder.currency,
-        orderStatus: "NEW",
-        statusHistory: [{ status: "NEW", timestamp: createdAt }],
         razorpayOrderId: razorpayOrder.id,
         razorpayPaymentId: null,
         createdAt,
         updatedAt: createdAt,
-      });
+      };
       transaction.create(
         adminDb.collection("checkoutRequests").doc(razorpayOrder.id),
         {
-          orderId: orderRef.id,
-          displayOrderId,
+          orderData,
           customerId: user.uid,
           customer: {
             name: address.name,
@@ -349,7 +333,7 @@ export async function POST(request: Request) {
           totalAmount,
           amountPaise: razorpayOrder.amount,
           currency: razorpayOrder.currency,
-          status: "PENDING",
+          status: "CREATED",
           createdAt,
           updatedAt: createdAt,
         },
@@ -359,7 +343,6 @@ export async function POST(request: Request) {
         {
           status: "READY",
           razorpayOrderId: razorpayOrder.id,
-          internalOrderId: orderRef.id,
           amount: razorpayOrder.amount,
           currency: razorpayOrder.currency,
           deliveryCharge,
@@ -371,14 +354,13 @@ export async function POST(request: Request) {
         },
         { merge: true },
       );
-      return { id: orderRef.id };
+      return { id: razorpayOrder.id };
     });
     return NextResponse.json({
       keyId: process.env.RAZORPAY_KEY_ID,
       orderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
-      internalOrderId: created.id,
       discount,
     });
   } catch (error) {

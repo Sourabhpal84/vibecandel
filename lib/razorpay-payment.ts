@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 
 type Checkout = {
   orderId?: string;
+  orderData?: Record<string, unknown>;
   amountPaise?: number;
   currency?: string;
   status?: string;
@@ -123,12 +124,13 @@ export async function confirmRazorpayPayment(
     const checkoutSnapshot = await transaction.get(checkoutRef);
     if (!checkoutSnapshot.exists) throw new Error("Payment order not found");
     const checkout = checkoutSnapshot.data() as Checkout;
-    if (!checkout.orderId) throw new Error("Payment order is incomplete");
     assertCapturedPayment(payment, checkout, razorpayOrderId, razorpayPaymentId);
-    const orderRef = adminDb.collection("orders").doc(checkout.orderId);
-    const orderSnapshot = await transaction.get(orderRef);
-    if (!orderSnapshot.exists) throw new Error("Order record not found");
-    const order = orderSnapshot.data() as {
+    const orderRef = checkout.orderId
+      ? adminDb.collection("orders").doc(checkout.orderId)
+      : adminDb.collection("orders").doc();
+    const orderSnapshot = checkout.orderId ? await transaction.get(orderRef) : undefined;
+    if (checkout.orderId && !orderSnapshot?.exists) throw new Error("Order record not found");
+    const order = (orderSnapshot?.data() || {}) as {
       paymentStatus?: string;
       statusHistory?: unknown[];
       displayOrderId?: string;
@@ -147,6 +149,11 @@ export async function confirmRazorpayPayment(
       ? adminDb.collection("coupons").doc(checkout.couponCode)
       : undefined;
     const couponSnapshot = couponRef ? await transaction.get(couponRef) : undefined;
+    const counterRef = adminDb.collection("counters").doc("orders");
+    const counterSnapshot = checkout.orderId ? undefined : await transaction.get(counterRef);
+    const nextDisplayOrderId = checkout.orderId
+      ? order.displayOrderId
+      : `LW-${Number(counterSnapshot?.data()?.nextNumber || 10000) + 1}`;
     const now = new Date().toISOString();
     const history = Array.isArray(order.statusHistory)
       ? order.statusHistory
@@ -163,17 +170,41 @@ export async function confirmRazorpayPayment(
     )
       ? paymentHistory
       : [...paymentHistory, { status: "CONFIRMED", timestamp: now }];
-    transaction.update(orderRef, {
-      paymentStatus: "PAID",
-      paymentCurrency: payment.currency || checkout.currency || "INR",
-      orderStatus: "CONFIRMED",
-      razorpayPaymentId,
-      paymentVerifiedAt: now,
-      updatedAt: now,
-      statusHistory: confirmedHistory,
-    });
+    if (checkout.orderId) {
+      transaction.update(orderRef, {
+        paymentStatus: "PAID",
+        paymentCurrency: payment.currency || checkout.currency || "INR",
+        orderStatus: "CONFIRMED",
+        razorpayPaymentId,
+        paymentVerifiedAt: now,
+        updatedAt: now,
+        statusHistory: confirmedHistory,
+      });
+    } else {
+      if (!checkout.orderData) throw new Error("Payment order details are incomplete");
+      const orderData = checkout.orderData as Record<string, unknown>;
+      const createdAt = String(orderData.createdAt || now);
+      transaction.set(counterRef, { nextNumber: Number(counterSnapshot?.data()?.nextNumber || 10000) + 1, updatedAt: now }, { merge: true });
+      transaction.create(orderRef, {
+        ...orderData,
+        displayOrderId: nextDisplayOrderId,
+        paymentStatus: "PAID",
+        orderStatus: "CONFIRMED",
+        paymentCurrency: payment.currency || checkout.currency || "INR",
+        razorpayPaymentId,
+        paymentVerifiedAt: now,
+        updatedAt: now,
+        statusHistory: [
+          { status: "NEW", timestamp: createdAt },
+          { status: "PAYMENT CONFIRMED", timestamp: now },
+          { status: "CONFIRMED", timestamp: now },
+        ],
+      });
+    }
     transaction.update(checkoutRef, {
       status: "PAID",
+      orderId: orderRef.id,
+      displayOrderId: nextDisplayOrderId,
       razorpayPaymentId,
       currency: payment.currency || checkout.currency || "INR",
       paymentVerifiedAt: now,
@@ -182,7 +213,7 @@ export async function confirmRazorpayPayment(
     if (eventRef) transaction.create(eventRef, { event: eventName, status: "PROCESSED", razorpayOrderId, razorpayPaymentId, orderId: orderRef.id, processedAt: now });
     if (couponRef && couponSnapshot?.exists)
       transaction.update(couponRef, { usageCount: FieldValue.increment(1), updatedAt: now });
-    return { id: orderRef.id, displayOrderId: order.displayOrderId };
+    return { id: orderRef.id, displayOrderId: nextDisplayOrderId };
   });
 }
 
@@ -206,7 +237,10 @@ export async function markRazorpayPaymentFailed(
     }
     const checkout = checkoutSnapshot.data() as Checkout;
     if (!checkout.orderId) {
-      if (eventRef) transaction.create(eventRef, { event: "payment.failed", status: "IGNORED", razorpayOrderId, receivedAt: new Date().toISOString() });
+      if (payment.order_id !== razorpayOrderId || payment.status !== "failed" || payment.id === undefined || !Number.isSafeInteger(checkout.amountPaise) || payment.amount !== checkout.amountPaise || (payment.currency || checkout.currency || "INR").toUpperCase() !== "INR")
+        throw new Error("Failed payment does not match this checkout");
+      if (checkout.status !== "PAID") transaction.update(checkoutRef, { status: "FAILED", razorpayPaymentId: payment.id, updatedAt: new Date().toISOString() });
+      if (eventRef) transaction.create(eventRef, { event: "payment.failed", status: "PROCESSED", razorpayOrderId, razorpayPaymentId: payment.id, receivedAt: new Date().toISOString() });
       return;
     }
     if (payment.order_id !== razorpayOrderId || payment.status !== "failed" || payment.id === undefined || !Number.isSafeInteger(checkout.amountPaise) || payment.amount !== checkout.amountPaise || (payment.currency || checkout.currency || "INR").toUpperCase() !== "INR")

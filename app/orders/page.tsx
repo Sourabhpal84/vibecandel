@@ -72,6 +72,7 @@ export default function OrdersPage() {
                 id: item.id,
                 ...(item.data() as Omit<Order, "id">),
               }))
+              .filter((order) => order.paymentStatus === "PAID")
               .sort((a, b) =>
                 String(b.createdAt).localeCompare(String(a.createdAt)),
               ),
