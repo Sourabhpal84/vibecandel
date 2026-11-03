@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronDown, ChevronUp, ImagePlus, Plus, Trash2, X } from "lucide-react";
+import { ArrowDownToLine, ArrowLeft, ArrowUpFromLine, ChevronDown, ChevronUp, ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { CategoryNode, slugify } from "@/lib/category-tree";
@@ -10,6 +10,7 @@ import { Product } from "@/lib/products";
 import {
   addCategory,
   addProduct as createProduct,
+  adjustProductStock,
   deleteCategory,
   deleteProduct,
   getCategories,
@@ -45,6 +46,7 @@ export default function AdminPage() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [movingCategoryId, setMovingCategoryId] = useState<string | null>(null);
   const [movingProductId, setMovingProductId] = useState<string | null>(null);
+  const [stockUpdatingId, setStockUpdatingId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
@@ -101,6 +103,26 @@ export default function AdminPage() {
       setNotice(`${product.name} position saved.`);
     } catch (error) { setNotice(catalogError(error)); }
     finally { setMovingProductId(null); }
+  };
+  const adjustStock = async (product: Product, direction: 1 | -1) => {
+    const quantityInput = prompt(`${direction > 0 ? "Stock in" : "Stock out"} for ${product.name}\nEnter quantity`);
+    if (quantityInput === null) return;
+    const quantity = Number(quantityInput.trim());
+    if (!Number.isSafeInteger(quantity) || quantity < 1) {
+      setNotice("Enter a whole quantity greater than zero.");
+      return;
+    }
+    const note = prompt("Optional note (for example: new delivery, damaged, or manual correction)") || "";
+    setStockUpdatingId(product.id);
+    try {
+      const stock = await adjustProductStock(product.id, direction * quantity, note);
+      setItems((current) => current.map((item) => item.id === product.id ? { ...item, stock } : item));
+      setNotice(`${direction > 0 ? "Stock added" : "Stock removed"}: ${product.name} now has ${stock} units.`);
+    } catch (error) {
+      setNotice(catalogError(error));
+    } finally {
+      setStockUpdatingId(null);
+    }
   };
   const addMainCategory = async () => {
     const name = prompt("Main category name");
@@ -334,13 +356,17 @@ export default function AdminPage() {
                   <div>
                     <b>{product.name}</b>
                     <span>
-                      {product.category}{product.scent ? ` · ${product.scent}` : ""} · Stock {product.stock ?? "—"}
+                      {product.category}{product.scent ? ` · ${product.scent}` : ""} · Stock {product.stock ?? 0}
                     </span>
                   </div>
                   <strong>₹{product.price.toLocaleString("en-IN")}</strong>
                   <div className="product-reorder" aria-label={`Reorder ${product.name}`}>
                     <button type="button" onClick={() => moveProduct(product, -1)} disabled={movingProductId !== null || productIndex === 0} aria-label={`Move ${product.name} up`} title="Move up"><ChevronUp size={15}/></button>
                     <button type="button" onClick={() => moveProduct(product, 1)} disabled={movingProductId !== null || productIndex === items.length - 1} aria-label={`Move ${product.name} down`} title="Move down"><ChevronDown size={15}/></button>
+                  </div>
+                  <div className="stock-actions" aria-label={`Manage stock for ${product.name}`}>
+                    <button type="button" onClick={() => adjustStock(product, 1)} disabled={stockUpdatingId !== null} title="Add stock"><ArrowDownToLine size={14}/> STOCK IN</button>
+                    <button type="button" onClick={() => adjustStock(product, -1)} disabled={stockUpdatingId !== null || !(product.stock ?? 0)} title="Remove stock"><ArrowUpFromLine size={14}/> STOCK OUT</button>
                   </div>
                   <div className="admin-product-actions"><button onClick={() => editProduct(product)} aria-label={`Edit ${product.name}`}>EDIT</button><button onClick={() => removeProduct(product)} aria-label={`Delete ${product.name}`}><Trash2 size={16} /></button></div>
                 </div>

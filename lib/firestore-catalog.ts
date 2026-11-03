@@ -1,5 +1,5 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, setDoc, where, writeBatch } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, runTransaction, setDoc, where, writeBatch } from 'firebase/firestore'
+import { auth, db } from '@/lib/firebase'
 import { Product } from '@/lib/products'
 import { CategoryNode } from '@/lib/category-tree'
 
@@ -38,6 +38,35 @@ export async function addProduct(product: Omit<Product, 'id'>) {
 export async function updateProduct(id: string, product: Partial<Product>) {
   requireFirebase()
   await setDoc(doc(db, 'products', id), { ...product, updatedAt: new Date().toISOString() }, { merge: true })
+}
+
+export async function adjustProductStock(id: string, change: number, note = '') {
+  requireFirebase()
+  if (!Number.isSafeInteger(change) || change === 0) throw new Error('Enter a valid stock quantity.')
+  const productRef = doc(db, 'products', id)
+  const movementRef = doc(collection(db, 'stockMovements'))
+  return runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(productRef)
+    if (!snapshot.exists()) throw new Error('Product no longer exists.')
+    const currentStock = Number(snapshot.data().stock ?? 0)
+    const nextStock = currentStock + change
+    if (nextStock < 0) throw new Error(`Only ${currentStock} units are available to remove.`)
+    const now = new Date().toISOString()
+    transaction.update(productRef, { stock: nextStock, updatedAt: now })
+    transaction.set(movementRef, {
+      productId: id,
+      productName: String(snapshot.data().name || id),
+      type: change > 0 ? 'IN' : 'OUT',
+      quantity: Math.abs(change),
+      change,
+      stockBefore: currentStock,
+      stockAfter: nextStock,
+      note: note.trim(),
+      changedBy: auth.currentUser?.uid || null,
+      createdAt: now,
+    })
+    return nextStock
+  })
 }
 
 export async function deleteProduct(id: string) {
